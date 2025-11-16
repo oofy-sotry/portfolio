@@ -1,0 +1,419 @@
+{% extends "base.html" %}
+
+{% block title %}프로필 편집 - 개발자 포트폴리오{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-edit"></i> 프로필 편집
+                </h1>
+                <div class="btn-group">
+                    <a href="{{ url_for('profile.manage') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> 돌아가기
+                    </a>
+                    <a href="{{ url_for('profile.preview') }}" class="btn btn-outline-primary" target="_blank">
+                        <i class="fas fa-eye"></i> 미리보기
+                    </a>
+                </div>
+            </div>
+
+            <form method="POST" id="profileForm" enctype="multipart/form-data">
+                <!-- 기본 정보 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-user"></i> 기본 정보
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="name" class="form-label">이름</label>
+                                <input type="text" class="form-control" id="name" name="name" 
+                                       value="{{ profile.name }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="title" class="form-label">직책/타이틀</label>
+                                <input type="text" class="form-control" id="title" name="title" 
+                                       value="{{ profile.title }}" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bio" class="form-label">자기소개</label>
+                            <textarea class="form-control" id="bio" name="bio" rows="4" required>{{ profile.bio }}</textarea>
+                        </div>
+                        <!-- 프로필 이미지 업로드 -->
+                        <div class="mb-3">
+                            <label class="form-label">프로필 이미지</label>
+                            
+                            <!-- 현재 이미지 표시 -->
+                            {% if profile.profile_image_filename or profile.profile_image_url %}
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <img src="{{ profile.get_profile_image_url() }}" alt="현재 프로필 이미지" 
+                                         class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;">
+                                    <div>
+                                        <p class="mb-1 text-muted small">현재 이미지</p>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteCurrentImage()">
+                                            <i class="fas fa-trash"></i> 삭제
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- 파일 업로드 -->
+                            <div class="mb-3">
+                                <input type="file" class="form-control" id="profile_image" name="profile_image" 
+                                       accept="image/*" onchange="previewImage(this)">
+                                <div class="form-text">
+                                    PNG, JPG, JPEG, GIF, WEBP 파일만 허용 (최대 5MB)
+                                </div>
+                            </div>
+                            
+                            <!-- 이미지 미리보기 -->
+                            <div id="imagePreview" class="mb-3" style="display: none;">
+                                <img id="previewImg" src="" alt="미리보기" 
+                                     class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;">
+                                <p class="text-muted small mt-1">미리보기</p>
+                            </div>
+                            
+                            <!-- URL 방식 (대안) -->
+                            <div class="mb-3">
+                                <label for="profile_image_url" class="form-label">또는 이미지 URL</label>
+                                <input type="url" class="form-control" id="profile_image_url" name="profile_image_url" 
+                                       value="{{ profile.profile_image_url or '' }}" 
+                                       placeholder="https://example.com/profile.jpg">
+                                <div class="form-text">
+                                    파일 업로드 대신 URL로 이미지를 설정할 수 있습니다.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 기술 스택 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-code"></i> 기술 스택
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-primary">Backend</label>
+                                <div id="backend-skills">
+                                    {% for skill in profile.skills.backend %}
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" name="backend_skills" value="{{ skill }}">
+                                        <button type="button" class="btn btn-outline-danger" onclick="removeSkill(this)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="addSkill('backend')">
+                                    <i class="fas fa-plus"></i> 추가
+                                </button>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-success">Frontend</label>
+                                <div id="frontend-skills">
+                                    {% for skill in profile.skills.frontend %}
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" name="frontend_skills" value="{{ skill }}">
+                                        <button type="button" class="btn btn-outline-danger" onclick="removeSkill(this)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-success" onclick="addSkill('frontend')">
+                                    <i class="fas fa-plus"></i> 추가
+                                </button>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-info">DevOps & Tools</label>
+                                <div id="devops-skills">
+                                    {% for skill in profile.skills.devops %}
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" name="devops_skills" value="{{ skill }}">
+                                        <button type="button" class="btn btn-outline-danger" onclick="removeSkill(this)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-info" onclick="addSkill('devops')">
+                                    <i class="fas fa-plus"></i> 추가
+                                </button>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-warning">기타</label>
+                                <div id="other-skills">
+                                    {% for skill in profile.skills.other %}
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" name="other_skills" value="{{ skill }}">
+                                        <button type="button" class="btn btn-outline-danger" onclick="removeSkill(this)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-warning" onclick="addSkill('other')">
+                                    <i class="fas fa-plus"></i> 추가
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 경력 & 프로젝트 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-briefcase"></i> 경력 & 프로젝트
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="experiences">
+                            {% for experience in profile.experiences %}
+                            <div class="experience-item border p-3 mb-3 rounded">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0">경력 {{ loop.index }}</h6>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeExperience(this)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">제목</label>
+                                        <input type="text" class="form-control" name="exp_title_{{ loop.index0 }}" 
+                                               value="{{ experience.title }}" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">기간</label>
+                                        <input type="text" class="form-control" name="exp_period_{{ loop.index0 }}" 
+                                               value="{{ experience.period }}" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">설명</label>
+                                    <textarea class="form-control" name="exp_description_{{ loop.index0 }}" rows="3" required>{{ experience.description }}</textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">사용 기술</label>
+                                    <div class="technologies-input">
+                                        {% for tech in experience.technologies %}
+                                        <div class="input-group mb-2">
+                                            <input type="text" class="form-control" name="exp_technologies_{{ loop.index0 }}" value="{{ tech }}">
+                                            <button type="button" class="btn btn-outline-danger" onclick="removeTech(this)">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addTech(this)">
+                                        <i class="fas fa-plus"></i> 기술 추가
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-outline-primary" onclick="addExperience()">
+                            <i class="fas fa-plus"></i> 경력 추가
+                        </button>
+                        <input type="hidden" id="experience_count" name="experience_count" value="{{ profile.experiences|length }}">
+                    </div>
+                </div>
+
+                <!-- 연락처 정보 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-envelope"></i> 연락처 정보
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">이메일</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="{{ profile.contact_info.email }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="github" class="form-label">GitHub</label>
+                                <input type="text" class="form-control" id="github" name="github" 
+                                       value="{{ profile.contact_info.github }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="linkedin" class="form-label">LinkedIn</label>
+                                <input type="text" class="form-control" id="linkedin" name="linkedin" 
+                                       value="{{ profile.contact_info.linkedin }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="website" class="form-label">웹사이트</label>
+                                <input type="url" class="form-control" id="website" name="website" 
+                                       value="{{ profile.contact_info.website }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 저장 버튼 -->
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save"></i> 프로필 저장
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let experienceIndex = {{ profile.experiences|length }};
+
+// 기술 스택 추가
+function addSkill(category) {
+    const container = document.getElementById(category + '-skills');
+    const div = document.createElement('div');
+    div.className = 'input-group mb-2';
+    div.innerHTML = `
+        <input type="text" class="form-control" name="${category}_skills" placeholder="기술명 입력">
+        <button type="button" class="btn btn-outline-danger" onclick="removeSkill(this)">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    container.appendChild(div);
+}
+
+// 기술 스택 제거
+function removeSkill(button) {
+    button.parentElement.remove();
+}
+
+// 경력 추가
+function addExperience() {
+    const container = document.getElementById('experiences');
+    const div = document.createElement('div');
+    div.className = 'experience-item border p-3 mb-3 rounded';
+    div.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">경력 ${experienceIndex + 1}</h6>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeExperience(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">제목</label>
+                <input type="text" class="form-control" name="exp_title_${experienceIndex}" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">기간</label>
+                <input type="text" class="form-control" name="exp_period_${experienceIndex}" required>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">설명</label>
+            <textarea class="form-control" name="exp_description_${experienceIndex}" rows="3" required></textarea>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">사용 기술</label>
+            <div class="technologies-input">
+                <div class="input-group mb-2">
+                    <input type="text" class="form-control" name="exp_technologies_${experienceIndex}">
+                    <button type="button" class="btn btn-outline-danger" onclick="removeTech(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addTech(this)">
+                <i class="fas fa-plus"></i> 기술 추가
+            </button>
+        </div>
+    `;
+    container.appendChild(div);
+    experienceIndex++;
+    updateExperienceCount();
+}
+
+// 경력 제거
+function removeExperience(button) {
+    button.closest('.experience-item').remove();
+    updateExperienceCount();
+}
+
+// 경력 수 업데이트
+function updateExperienceCount() {
+    const count = document.querySelectorAll('.experience-item').length;
+    document.getElementById('experience_count').value = count;
+}
+
+// 기술 추가 (경력 내)
+function addTech(button) {
+    const container = button.previousElementSibling;
+    const div = document.createElement('div');
+    div.className = 'input-group mb-2';
+    div.innerHTML = `
+        <input type="text" class="form-control" name="${button.previousElementSibling.querySelector('input').name}">
+        <button type="button" class="btn btn-outline-danger" onclick="removeTech(this)">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    container.appendChild(div);
+}
+
+// 기술 제거 (경력 내)
+function removeTech(button) {
+    button.parentElement.remove();
+}
+
+// 이미지 미리보기
+function previewImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            document.getElementById('previewImg').src = e.target.result;
+            document.getElementById('imagePreview').style.display = 'block';
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// 현재 이미지 삭제
+function deleteCurrentImage() {
+    if (confirm('현재 프로필 이미지를 삭제하시겠습니까?')) {
+        fetch('/profile/delete-image', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('이미지가 삭제되었습니다.');
+                location.reload(); // 페이지 새로고침
+            } else {
+                alert('이미지 삭제 중 오류가 발생했습니다: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('이미지 삭제 중 오류가 발생했습니다.');
+        });
+    }
+}
+</script>
+{% endblock %}
+

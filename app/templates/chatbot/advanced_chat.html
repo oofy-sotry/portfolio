@@ -1,0 +1,346 @@
+{% extends "base.html" %}
+
+{% block title %}AI 챗봇 - 개발자 포트폴리오{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">
+                        <i class="fas fa-robot"></i> AI 챗봇
+                    </h3>
+                    <div class="chatbot-controls">
+                        <!-- 답변 모드 전환 -->
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="responseMode" id="conciseMode" value="concise" checked>
+                            <label class="btn btn-outline-primary btn-sm" for="conciseMode">
+                                <i class="fas fa-compress"></i> 간결
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="responseMode" id="detailedMode" value="detailed">
+                            <label class="btn btn-outline-primary btn-sm" for="detailedMode">
+                                <i class="fas fa-expand"></i> 상세
+                            </label>
+                        </div>
+                        
+                        <!-- 검색 모드 전환 -->
+                        <div class="btn-group ms-2" role="group">
+                            <input type="radio" class="btn-check" name="searchMode" id="faqMode" value="faq" checked>
+                            <label class="btn btn-outline-success btn-sm" for="faqMode">
+                                <i class="fas fa-question-circle"></i> FAQ
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="searchMode" id="searchMode" value="search">
+                            <label class="btn btn-outline-success btn-sm" for="searchMode">
+                                <i class="fas fa-search"></i> 검색
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="searchMode" id="aiMode" value="ai">
+                            <label class="btn btn-outline-success btn-sm" for="aiMode">
+                                <i class="fas fa-brain"></i> AI
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body p-0">
+                    <!-- 채팅 메시지 영역 -->
+                    <div class="chat-messages" id="chatMessages" style="height: 500px; overflow-y: auto; padding: 20px;">
+                        <div class="bot-message mb-3">
+                            <div class="d-flex align-items-start">
+                                <div class="avatar me-3">
+                                    <i class="fas fa-robot fa-2x text-primary"></i>
+                                </div>
+                                <div class="message-content">
+                                    <div class="message-bubble bg-light p-3 rounded">
+                                        <p class="mb-0">안녕하세요! AI 챗봇입니다. 궁금한 것이 있으시면 언제든 물어보세요.</p>
+                                        <small class="text-muted">방금 전</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 입력 영역 -->
+                    <div class="chat-input border-top p-3">
+                        <div class="input-group">
+                            <input type="text" id="messageInput" class="form-control" placeholder="메시지를 입력하세요..." autocomplete="off">
+                            <button class="btn btn-primary" id="sendButton">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- 빠른 질문 버튼 -->
+                        <div class="quick-questions mt-3">
+                            <small class="text-muted">빠른 질문:</small>
+                            <div class="d-flex flex-wrap gap-2 mt-2">
+                                <button class="btn btn-outline-secondary btn-sm quick-question" data-question="자기소개">
+                                    자기소개
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm quick-question" data-question="기술스택">
+                                    기술스택
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm quick-question" data-question="프로젝트">
+                                    프로젝트
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm quick-question" data-question="연락처">
+                                    연락처
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm quick-question" data-question="경력">
+                                    경력
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.chat-messages {
+    background: #f8f9fa;
+}
+
+.message-bubble {
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.user-message .message-bubble {
+    background: #007bff;
+    color: white;
+    margin-left: auto;
+}
+
+.bot-message .message-bubble {
+    background: white;
+    border: 1px solid #dee2e6;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    border-radius: 50%;
+}
+
+.typing-indicator {
+    display: none;
+}
+
+.typing-indicator.show {
+    display: block;
+}
+
+.quick-questions .btn {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.chatbot-controls .btn-group {
+    margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+    .chatbot-controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .chatbot-controls .btn-group {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatMessages = document.getElementById('chatMessages');
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
+    const quickQuestions = document.querySelectorAll('.quick-question');
+    
+    let currentMode = 'concise';
+    let currentSearchMode = 'faq';
+    
+    // 답변 모드 변경
+    document.querySelectorAll('input[name="responseMode"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            currentMode = this.value;
+        });
+    });
+    
+    // 검색 모드 변경
+    document.querySelectorAll('input[name="searchMode"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            currentSearchMode = this.value;
+        });
+    });
+    
+    // 메시지 전송
+    function sendMessage() {
+        const message = messageInput.value.trim();
+        if (!message) return;
+        
+        // 사용자 메시지 추가
+        addMessage(message, 'user');
+        messageInput.value = '';
+        
+        // 타이핑 인디케이터 표시
+        showTypingIndicator();
+        
+        // 서버로 전송
+        fetch('/chatbot/ai-chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: message,
+                mode: currentMode,
+                search_mode: currentSearchMode
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            hideTypingIndicator();
+            
+            if (data.error) {
+                addMessage('죄송합니다. 오류가 발생했습니다: ' + data.error, 'bot');
+            } else {
+                addMessage(data.response, 'bot');
+                
+                // 관련 문서가 있으면 표시
+                if (data.related_docs && data.related_docs.length > 0) {
+                    showRelatedDocs(data.related_docs);
+                }
+            }
+        })
+        .catch(error => {
+            hideTypingIndicator();
+            addMessage('죄송합니다. 연결에 문제가 발생했습니다.', 'bot');
+            console.error('Error:', error);
+        });
+    }
+    
+    // 메시지 추가
+    function addMessage(text, sender) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `mb-3 ${sender}-message`;
+        
+        const avatar = sender === 'user' ? 
+            '<i class="fas fa-user fa-2x text-success"></i>' : 
+            '<i class="fas fa-robot fa-2x text-primary"></i>';
+        
+        const bubbleClass = sender === 'user' ? 
+            'bg-primary text-white' : 
+            'bg-white border';
+        
+        messageDiv.innerHTML = `
+            <div class="d-flex align-items-start">
+                <div class="avatar me-3">
+                    ${avatar}
+                </div>
+                <div class="message-content">
+                    <div class="message-bubble ${bubbleClass} p-3 rounded">
+                        <p class="mb-0">${text}</p>
+                        <small class="text-muted">방금 전</small>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // 타이핑 인디케이터
+    function showTypingIndicator() {
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'mb-3 bot-message typing-indicator show';
+        typingDiv.innerHTML = `
+            <div class="d-flex align-items-start">
+                <div class="avatar me-3">
+                    <i class="fas fa-robot fa-2x text-primary"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-bubble bg-white border p-3 rounded">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            <span>답변을 생성하고 있습니다...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        chatMessages.appendChild(typingDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    function hideTypingIndicator() {
+        const typingIndicator = chatMessages.querySelector('.typing-indicator');
+        if (typingIndicator) {
+            typingIndicator.remove();
+        }
+    }
+    
+    // 관련 문서 표시
+    function showRelatedDocs(docs) {
+        const docsDiv = document.createElement('div');
+        docsDiv.className = 'mb-3 bot-message';
+        docsDiv.innerHTML = `
+            <div class="d-flex align-items-start">
+                <div class="avatar me-3">
+                    <i class="fas fa-robot fa-2x text-primary"></i>
+                </div>
+                <div class="message-content">
+                    <div class="message-bubble bg-light border p-3 rounded">
+                        <h6 class="mb-2">관련 문서:</h6>
+                        ${docs.map(doc => `
+                            <div class="mb-2">
+                                <a href="/board/${doc._source.id}" class="text-decoration-none">
+                                    <strong>${doc._source.title}</strong>
+                                </a>
+                                <p class="mb-1 small text-muted">${doc._source.summary || doc._source.content.substring(0, 100)}...</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        chatMessages.appendChild(docsDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // 이벤트 리스너
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+    
+    // 빠른 질문 버튼
+    quickQuestions.forEach(button => {
+        button.addEventListener('click', function() {
+            const question = this.dataset.question;
+            messageInput.value = question;
+            sendMessage();
+        });
+    });
+});
+</script>
+{% endblock %}

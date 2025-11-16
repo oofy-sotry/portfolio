@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}FAQ{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-question-circle"></i> 자주 묻는 질문 (FAQ)
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="faqAccordion">
+                        {% for question, answer in faq_data.items() %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading{{ loop.index }}">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#collapse{{ loop.index }}" aria-expanded="false" 
+                                        aria-controls="collapse{{ loop.index }}">
+                                    {{ question }}
+                                </button>
+                            </h2>
+                            <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" 
+                                 aria-labelledby="heading{{ loop.index }}" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    {{ answer }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">빠른 질문</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% for question in faq_data.keys() %}
+                        <button class="btn btn-outline-primary btn-sm" onclick="askQuestion('{{ question }}')">
+                            {{ question }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">챗봇과 대화</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">더 자세한 답변이 필요하시다면 챗봇과 대화해보세요!</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('chatbot.chat') }}" class="btn btn-primary">
+                            <i class="fas fa-robot"></i> 기본 챗봇
+                        </a>
+                        <a href="{{ url_for('chatbot.advanced_chat') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-cog"></i> 고급 챗봇
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function askQuestion(question) {
+    // 챗봇 페이지로 이동하면서 질문 전달
+    window.location.href = `{{ url_for('chatbot.chat') }}?q=${encodeURIComponent(question)}`;
+}
+</script>
+{% endblock %}

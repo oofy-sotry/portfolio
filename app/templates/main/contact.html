@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}연락처 - 개발자 포트폴리오{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="text-center mb-5">
+                <h1 class="display-5 fw-bold">연락처</h1>
+                <p class="lead text-muted">함께 일하고 싶으시다면 언제든 연락주세요!</p>
+            </div>
+
+            <div class="row">
+                <!-- Contact Info -->
+                <div class="col-lg-6 mb-5">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h3 class="card-title mb-0">
+                                <i class="fas fa-address-card"></i> 연락처 정보
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="contact-item mb-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="contact-icon me-3">
+                                        <i class="fas fa-envelope fa-2x text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">이메일</h6>
+                                        <p class="text-muted mb-0">developer@example.com</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="contact-item mb-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="contact-icon me-3">
+                                        <i class="fab fa-github fa-2x text-dark"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">GitHub</h6>
+                                        <p class="text-muted mb-0">github.com/username</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="contact-item mb-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="contact-icon me-3">
+                                        <i class="fab fa-linkedin fa-2x text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">LinkedIn</h6>
+                                        <p class="text-muted mb-0">linkedin.com/in/username</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="contact-item mb-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="contact-icon me-3">
+                                        <i class="fas fa-globe fa-2x text-success"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">웹사이트</h6>
+                                        <p class="text-muted mb-0">portfolio-website.com</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Form -->
+                <div class="col-lg-6 mb-5">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h3 class="card-title mb-0">
+                                <i class="fas fa-paper-plane"></i> 메시지 보내기
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="contactForm">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">이름</label>
+                                    <input type="text" class="form-control" id="name" name="name" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">이메일</label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="subject" class="form-label">제목</label>
+                                    <input type="text" class="form-control" id="subject" name="subject" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="message" class="form-label">메시지</label>
+                                    <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+                                </div>
+                                
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-paper-plane"></i> 메시지 전송
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Info -->
+            <div class="row mt-5">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h4 class="card-title">협업 제안</h4>
+                            <p class="card-text">
+                                새로운 프로젝트나 협업 기회에 항상 열려있습니다. 
+                                함께 멋진 것을 만들어보고 싶으시다면 언제든 연락주세요!
+                            </p>
+                            <div class="d-flex justify-content-center gap-3">
+                                <a href="mailto:developer@example.com" class="btn btn-primary">
+                                    <i class="fas fa-envelope"></i> 이메일 보내기
+                                </a>
+                                <a href="{{ url_for('chatbot.chat') }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-robot"></i> 챗봇과 대화
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('contactForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // 폼 데이터 수집
+    const formData = new FormData(this);
+    
+    // 실제 구현에서는 서버로 데이터를 전송
+    // 여기서는 시뮬레이션
+    alert('메시지가 전송되었습니다! (실제 구현에서는 서버로 전송됩니다)');
+    
+    // 폼 초기화
+    this.reset();
+});
+</script>
+{% endblock %}

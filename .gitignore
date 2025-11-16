@@ -1,0 +1,115 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+*.egg-info/
+dist/
+build/
+
+# Flask
+instance/
+.webassets-cache
+*.db
+*.sqlite
+
+# 환경 변수
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+desktop.ini
+
+# Docker
+*.log
+docker-compose.override.yml
+
+# 데이터베이스 백업
+*.sql.backup
+*.dump
+
+# 업로드된 파일 (선택사항 - 공개 저장소인 경우)
+# app/static/uploads/
+
+# 모델 파일 (큰 파일)
+models/*.pth
+models/*.bin
+models/*.safetensors
+*.h5
+*.ckpt
+
+# HuggingFace 캐시 (선택사항)
+# .cache/huggingface/
+
+# 임시 파일
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# 로그 파일
+logs/
+*.log
+
+# 테스트 커버리지
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Local configuration
+local_settings.py
+local_config.py
+

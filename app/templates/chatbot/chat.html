@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}챗봇{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-robot"></i> AI 챗봇
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- 챗봇 메시지 영역 -->
+                    <div id="chat-messages" class="chat-messages" style="height: 400px; overflow-y: auto; border: 1px solid #dee2e6; padding: 15px; margin-bottom: 20px; border-radius: 8px;">
+                        <div class="message bot-message">
+                            <div class="message-content">
+                                <strong>AI 챗봇:</strong> 안녕하세요! 무엇을 도와드릴까요? 😊
+                            </div>
+                            <small class="text-muted">방금 전</small>
+                        </div>
+                    </div>
+                    
+                    <!-- 메시지 입력 폼 -->
+                    <form id="chat-form">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="user-message" placeholder="메시지를 입력하세요..." required>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> 전송
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- 고급 기능 버튼 -->
+                    <div class="mt-3 text-center">
+                        <a href="{{ url_for('chatbot.advanced_chat') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-cog"></i> 고급 챗봇
+                        </a>
+                        <a href="{{ url_for('chatbot.faq') }}" class="btn btn-outline-info">
+                            <i class="fas fa-question-circle"></i> FAQ
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.chat-messages {
+    background-color: #f8f9fa;
+}
+
+.message {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.bot-message {
+    background-color: #e3f2fd;
+    margin-right: 20%;
+}
+
+.user-message {
+    background-color: #007bff;
+    color: white;
+    margin-left: 20%;
+    text-align: right;
+}
+
+.message-content {
+    margin-bottom: 5px;
+}
+
+.typing-indicator {
+    display: none;
+    color: #6c757d;
+    font-style: italic;
+}
+</style>
+
+<script>
+document.getElementById('chat-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const messageInput = document.getElementById('user-message');
+    const message = messageInput.value.trim();
+    
+    if (!message) return;
+    
+    // 사용자 메시지 추가
+    addMessage(message, 'user');
+    messageInput.value = '';
+    
+    // 타이핑 인디케이터 표시
+    showTypingIndicator();
+    
+    // 챗봇 응답 요청
+    fetch('/chatbot/send', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: message })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideTypingIndicator();
+        if (data.error) {
+            addMessage('죄송합니다. 오류가 발생했습니다: ' + data.error, 'bot');
+        } else {
+            addMessage(data.response, 'bot');
+        }
+    })
+    .catch(error => {
+        hideTypingIndicator();
+        console.error('Error:', error);
+        addMessage('죄송합니다. 연결에 문제가 발생했습니다.', 'bot');
+    });
+});
+
+function addMessage(message, sender) {
+    const chatMessages = document.getElementById('chat-messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}-message`;
+    
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('ko-KR', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
+    
+    messageDiv.innerHTML = `
+        <div class="message-content">
+            <strong>${sender === 'user' ? '나' : 'AI 챗봇'}:</strong> ${message}
+        </div>
+        <small class="text-muted">${timeString}</small>
+    `;
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function showTypingIndicator() {
+    const chatMessages = document.getElementById('chat-messages');
+    const typingDiv = document.createElement('div');
+    typingDiv.id = 'typing-indicator';
+    typingDiv.className = 'message bot-message typing-indicator';
+    typingDiv.innerHTML = `
+        <div class="message-content">
+            <strong>AI 챗봇:</strong> <span class="typing-dots">...</span>
+        </div>
+    `;
+    
+    chatMessages.appendChild(typingDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // 애니메이션 효과
+    const dots = typingDiv.querySelector('.typing-dots');
+    let dotCount = 0;
+    const typingInterval = setInterval(() => {
+        dotCount = (dotCount + 1) % 4;
+        dots.textContent = '.'.repeat(dotCount);
+    }, 500);
+    
+    // 전역 변수에 저장하여 나중에 제거할 수 있도록 함
+    window.typingInterval = typingInterval;
+}
+
+function hideTypingIndicator() {
+    const typingIndicator = document.getElementById('typing-indicator');
+    if (typingIndicator) {
+        typingIndicator.remove();
+    }
+    if (window.typingInterval) {
+        clearInterval(window.typingInterval);
+    }
+}
+
+// Enter 키로 메시지 전송
+document.getElementById('user-message').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}게시판{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>게시판</h2>
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('board.write_post') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> 글쓰기
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- 검색 및 필터 -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-4">
+                            <select name="category" class="form-select">
+                                <option value="">전체 카테고리</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}" {% if selected_category == category.id %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select name="sort" class="form-select">
+                                <option value="latest" {% if sort_by == 'latest' %}selected{% endif %}>최신순</option>
+                                <option value="popular" {% if sort_by == 'popular' %}selected{% endif %}>인기순</option>
+                                <option value="likes" {% if sort_by == 'likes' %}selected{% endif %}>좋아요순</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-outline-primary w-100">적용</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 게시글 목록 -->
+            <div class="card">
+                <div class="card-body">
+                    {% if posts.items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>번호</th>
+                                    <th>제목</th>
+                                    <th>작성자</th>
+                                    <th>카테고리</th>
+                                    <th>조회수</th>
+                                    <th>작성일</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for post in posts.items %}
+                                <tr>
+                                    <td>{{ post.id }}</td>
+                                    <td>
+                                        <a href="{{ url_for('board.view_post', post_id=post.id) }}" class="text-decoration-none">
+                                            {{ post.title }}
+                                        </a>
+                                        {% if post.tags %}
+                                        <small class="text-muted">
+                                            {% for tag in post.tags.split(',') %}
+                                            <span class="badge bg-secondary me-1">{{ tag.strip() }}</span>
+                                            {% endfor %}
+                                        </small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ post.author.username }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ post.category.name }}</span>
+                                    </td>
+                                    <td>{{ post.view_count }}</td>
+                                    <td>{{ post.created_at.strftime('%Y-%m-%d') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 페이지네이션 -->
+                    {% if posts.pages > 1 %}
+                    <nav aria-label="게시글 페이지네이션">
+                        <ul class="pagination justify-content-center">
+                            {% if posts.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('board.list_posts', page=posts.prev_num, category=selected_category, sort=sort_by) }}">이전</a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for page_num in posts.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num != posts.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('board.list_posts', page=page_num, category=selected_category, sort=sort_by) }}">{{ page_num }}</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                    {% endif %}
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if posts.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('board.list_posts', page=posts.next_num, category=selected_category, sort=sort_by) }}">다음</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">게시글이 없습니다</h5>
+                        <p class="text-muted">첫 번째 게시글을 작성해보세요!</p>
+                        {% if current_user.is_authenticated %}
+                        <a href="{{ url_for('board.write_post') }}" class="btn btn-primary">글쓰기</a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 사이드바 -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">카테고리</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <a href="{{ url_for('board.list_posts', sort=sort_by) }}" class="text-decoration-none">
+                                전체 ({{ posts.total }})
+                            </a>
+                        </li>
+                        {% for category in categories %}
+                        <li class="mb-2">
+                            <a href="{{ url_for('board.list_posts', category=category.id, sort=sort_by) }}" class="text-decoration-none">
+                                {{ category.name }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

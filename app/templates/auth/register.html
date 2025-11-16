@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}회원가입{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h3 class="mb-0">회원가입</h3>
+                </div>
+                <div class="card-body">
+                    <form id="register-form">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">사용자명 *</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                            <div class="form-text">3-20자의 영문, 숫자, 언더스코어만 사용 가능합니다.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label">이메일 *</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">비밀번호 *</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                            <div class="form-text">최소 8자 이상 입력해주세요.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">비밀번호 확인 *</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="terms" required>
+                            <label class="form-check-label" for="terms">
+                                <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">이용약관</a>에 동의합니다.
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">회원가입</button>
+                        </div>
+                    </form>
+                    
+                    <div class="text-center mt-3">
+                        <p class="mb-0">이미 계정이 있으신가요? <a href="{{ url_for('auth.login') }}">로그인</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 이용약관 모달 -->
+<div class="modal fade" id="termsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">이용약관</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>제1조 (목적)</h6>
+                <p>본 약관은 포트폴리오 웹사이트의 이용에 관한 사항을 규정함을 목적으로 합니다.</p>
+                
+                <h6>제2조 (정의)</h6>
+                <p>1. "서비스"란 포트폴리오 웹사이트에서 제공하는 모든 서비스를 의미합니다.</p>
+                <p>2. "이용자"란 서비스에 접속하여 본 약관에 따라 서비스를 이용하는 회원을 의미합니다.</p>
+                
+                <h6>제3조 (약관의 효력 및 변경)</h6>
+                <p>1. 본 약관은 이용자에게 공지함으로써 효력을 발생합니다.</p>
+                <p>2. 회사는 필요에 따라 본 약관을 변경할 수 있으며, 변경된 약관은 공지 후 7일 후부터 효력을 발생합니다.</p>
+                
+                <h6>제4조 (서비스의 제공)</h6>
+                <p>1. 회사는 다음과 같은 서비스를 제공합니다:</p>
+                <ul>
+                    <li>포트폴리오 정보 제공</li>
+                    <li>게시판 서비스</li>
+                    <li>챗봇 서비스</li>
+                    <li>검색 서비스</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('register-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = {
+        username: formData.get('username'),
+        email: formData.get('email'),
+        password: formData.get('password'),
+        confirm_password: formData.get('confirm_password')
+    };
+    
+    // 유효성 검사
+    if (data.password !== data.confirm_password) {
+        alert('비밀번호가 일치하지 않습니다.');
+        return;
+    }
+    
+    if (data.password.length < 8) {
+        alert('비밀번호는 8자 이상이어야 합니다.');
+        return;
+    }
+    
+    if (!data.username.match(/^[a-zA-Z0-9_]{3,20}$/)) {
+        alert('사용자명은 3-20자의 영문, 숫자, 언더스코어만 사용 가능합니다.');
+        return;
+    }
+    
+    fetch('/auth/register', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+        } else {
+            alert(data.message);
+            window.location.href = data.redirect;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('회원가입 중 오류가 발생했습니다.');
+    });
+});
+</script>
+{% endblock %}
