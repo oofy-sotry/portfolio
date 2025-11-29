@@ -206,6 +206,6 @@ def logout():
 @auth_bp.route('/profile')
 @login_required
 def profile():
-    """프로필 페이지"""
-    return render_template('auth/profile.html', user=current_user)
+    """프로필 페이지 - 포트폴리오 관리 페이지로 리다이렉트"""
+    return redirect(url_for('profile.manage'))
 

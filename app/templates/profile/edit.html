@@ -84,11 +84,11 @@
                             <!-- URL 방식 (대안) -->
                             <div class="mb-3">
                                 <label for="profile_image_url" class="form-label">또는 이미지 URL</label>
-                                <input type="url" class="form-control" id="profile_image_url" name="profile_image_url" 
+                                <input type="text" class="form-control" id="profile_image_url" name="profile_image_url" 
                                        value="{{ profile.profile_image_url or '' }}" 
                                        placeholder="https://example.com/profile.jpg">
                                 <div class="form-text">
-                                    파일 업로드 대신 URL로 이미지를 설정할 수 있습니다.
+                                    파일 업로드 대신 URL로 이미지를 설정할 수 있습니다. (선택사항)
                                 </div>
                             </div>
                         </div>
@@ -257,8 +257,9 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="website" class="form-label">웹사이트</label>
-                                <input type="url" class="form-control" id="website" name="website" 
-                                       value="{{ profile.contact_info.website }}">
+                                <input type="text" class="form-control" id="website" name="website" 
+                                       value="{{ profile.contact_info.website }}"
+                                       placeholder="https://example.com">
                             </div>
                         </div>
                     </div>
@@ -414,6 +415,41 @@ function deleteCurrentImage() {
         });
     }
 }
+
+// URL 형식 검증 함수
+function isValidUrl(string) {
+    if (!string || string.trim() === '') {
+        return true; // 빈 값은 허용
+    }
+    try {
+        const url = new URL(string);
+        return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch (_) {
+        return false;
+    }
+}
+
+// 폼 제출 시 검증
+document.getElementById('profileForm').addEventListener('submit', function(e) {
+    const profileImageUrl = document.getElementById('profile_image_url').value.trim();
+    const website = document.getElementById('website').value.trim();
+    
+    // 프로필 이미지 URL 검증
+    if (profileImageUrl && !isValidUrl(profileImageUrl)) {
+        e.preventDefault();
+        alert('프로필 이미지 URL이 올바른 형식이 아닙니다. (http:// 또는 https://로 시작해야 합니다)');
+        document.getElementById('profile_image_url').focus();
+        return false;
+    }
+    
+    // 웹사이트 URL 검증
+    if (website && !isValidUrl(website)) {
+        e.preventDefault();
+        alert('웹사이트 URL이 올바른 형식이 아닙니다. (http:// 또는 https://로 시작해야 합니다)');
+        document.getElementById('website').focus();
+        return false;
+    }
+});
 </script>
 {% endblock %}
 
