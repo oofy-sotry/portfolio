@@ -1,6 +1,20 @@
 // Main JavaScript for Portfolio Website
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Check if user is authenticated
+    const isAuthenticated = document.body.getAttribute('data-is-authenticated') === 'true';
+    
+    // Handle login-required links
+    document.querySelectorAll('.require-login').forEach(link => {
+        link.addEventListener('click', function(e) {
+            if (!isAuthenticated) {
+                e.preventDefault();
+                alert('로그인 후 이용 가능합니다.');
+                window.location.href = '/auth/login';
+            }
+        });
+    });
+    
     // Initialize tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {

@@ -14,7 +14,7 @@
     
     {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body data-is-authenticated="{{ 'true' if current_user.is_authenticated else 'false' }}">
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
@@ -32,13 +32,13 @@
                         <a class="nav-link" href="{{ url_for('main.index') }}">홈</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('board.list_posts') }}">게시판</a>
+                        <a class="nav-link require-login" href="{{ url_for('board.list_posts') }}">게시판</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.about') }}">자기소개</a>
+                        <a class="nav-link require-login" href="{{ url_for('main.about') }}">자기소개</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.contact') }}">연락처</a>
+                        <a class="nav-link require-login" href="{{ url_for('main.contact') }}">연락처</a>
                     </li>
                 </ul>
                 

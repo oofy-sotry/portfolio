@@ -15,10 +15,10 @@
                     사용자 경험을 중시하는 개발을 추구합니다.
                 </p>
                 <div class="d-flex gap-3">
-                    <a href="{{ url_for('main.about') }}" class="btn btn-light btn-lg">
+                    <a href="{{ url_for('main.about') }}" class="btn btn-light btn-lg require-login">
                         <i class="fas fa-user"></i> 자기소개
                     </a>
-                    <a href="{{ url_for('board.list_posts') }}" class="btn btn-outline-light btn-lg">
+                    <a href="{{ url_for('board.list_posts') }}" class="btn btn-outline-light btn-lg require-login">
                         <i class="fas fa-blog"></i> 블로그
                     </a>
                 </div>
@@ -107,7 +107,7 @@
                     </div>
                     {% endfor %}
                     <div class="text-center mt-4">
-                        <a href="{{ url_for('board.list_posts') }}" class="btn btn-primary">
+                        <a href="{{ url_for('board.list_posts') }}" class="btn btn-primary require-login">
                             모든 게시글 보기
                         </a>
                     </div>
@@ -156,7 +156,7 @@
                     궁금한 점이 있으시면 언제든 연락주세요!
                 </p>
                 <div class="d-flex gap-3 justify-content-center">
-                    <a href="{{ url_for('main.contact') }}" class="btn btn-primary btn-lg">
+                    <a href="{{ url_for('main.contact') }}" class="btn btn-primary btn-lg require-login">
                         <i class="fas fa-envelope"></i> 연락하기
                     </a>
                     <a href="{{ url_for('chatbot.chat') }}" class="btn btn-outline-primary btn-lg">

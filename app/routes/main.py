@@ -24,6 +24,7 @@ def index():
                          popular_posts=popular_posts)
 
 @main_bp.route('/about')
+@login_required
 def about():
     """자기소개 페이지"""
     try:
@@ -33,6 +34,7 @@ def about():
         return f"Error in about page: {str(e)}", 500
 
 @main_bp.route('/contact')
+@login_required
 def contact():
     """연락처 페이지"""
     return render_template('main/contact.html')

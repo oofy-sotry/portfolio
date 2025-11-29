@@ -7,6 +7,7 @@ from datetime import datetime
 board_bp = Blueprint('board', __name__)
 
 @board_bp.route('/')
+@login_required
 def list_posts():
     """게시글 목록"""
     page = request.args.get('page', 1, type=int)
