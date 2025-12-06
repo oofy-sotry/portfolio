@@ -11,6 +11,7 @@ import re
 class LLMService:
     def __init__(self):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        print(f"🔧 LLM 서비스 초기화 - 사용 디바이스: {self.device}")
         self.embedding_model = None
         self.generation_model = None
         self.summarization_model = None
@@ -19,6 +20,9 @@ class LLMService:
         
         # 모델 로딩
         self._load_models()
+        
+        # 모델 로딩 상태 확인
+        self._check_models_loaded()
     
     def _load_models(self):
         """로컬 경량화 모델 로딩"""
@@ -67,11 +71,33 @@ class LLMService:
             
         except Exception as e:
             print(f"❌ 모델 로딩 실패: {e}")
+            import traceback
+            traceback.print_exc()
             print("🔄 기본 응답 모드로 전환...")
             # 모델 로딩 실패 시 기본 응답 모드로 전환
             self.embedding_model = None
             self.generation_model = None
             self.summarization_model = None
+    
+    def _check_models_loaded(self):
+        """모델 로딩 상태 확인 및 로그 출력"""
+        print("\n" + "="*60)
+        print("📊 모델 로딩 상태 확인:")
+        print("="*60)
+        print(f"  임베딩 모델: {'✅ 로드됨' if self.embedding_model is not None else '❌ 로드 실패'}")
+        print(f"  생성 모델: {'✅ 로드됨' if self.generation_model is not None else '❌ 로드 실패'}")
+        print(f"  생성 토크나이저: {'✅ 로드됨' if self.tokenizer is not None else '❌ 로드 실패'}")
+        print(f"  요약 모델: {'✅ 로드됨' if self.summarization_model is not None else '❌ 로드 실패'}")
+        print("="*60)
+        
+        if self.generation_model is None or self.tokenizer is None:
+            print("⚠️ 경고: 생성 모델이 로드되지 않았습니다!")
+            print("   LLM 응답 생성이 불가능하며, 기본 응답만 사용됩니다.")
+            print("   원인 확인:")
+            print("   1. 모델 다운로드 실패 확인")
+            print("   2. 메모리 부족 확인")
+            print("   3. Docker 컨테이너 로그 확인: docker compose logs web")
+        print()
     
     def get_embeddings(self, texts):
         """텍스트 임베딩 생성"""
@@ -123,6 +149,9 @@ class LLMService:
         """응답 생성"""
         if self.generation_model is None or self.tokenizer is None:
             # 모델이 없으면 기본 응답
+            print(f"⚠️ LLM 모델이 로드되지 않아 기본 응답을 반환합니다.")
+            print(f"   generation_model: {self.generation_model is not None}")
+            print(f"   tokenizer: {self.tokenizer is not None}")
             return self._get_fallback_response(prompt)
         
         try:
@@ -166,6 +195,8 @@ class LLMService:
             
         except Exception as e:
             print(f"❌ 응답 생성 실패: {e}")
+            import traceback
+            traceback.print_exc()
             return self._get_fallback_response(prompt)
     
     def _get_fallback_response(self, prompt):
