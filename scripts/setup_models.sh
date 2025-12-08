@@ -74,18 +74,18 @@ done
 echo ""
 echo "="*60
 if [ "${ALL_MODELS_EXIST}" = true ] && [ "${DOWNLOAD_SUCCESS}" = true ]; then
-    echo "✅ 모델 설정 완료!"
-    echo ""
-    echo "📊 다운로드된 모델들:"
-    echo "  - 임베딩 모델: all-MiniLM-L6-v2 (~80MB)"
-    echo "  - 생성 모델: distilgpt2 (~500MB)"  
-    echo "  - 요약 모델: bart-large-cnn (~300MB)"
-    echo "  - 총 용량: 약 880MB"
+echo "✅ 모델 설정 완료!"
+echo ""
+echo "📊 다운로드된 모델들:"
+echo "  - 임베딩 모델: all-MiniLM-L6-v2 (~80MB)"
+echo "  - 생성 모델: distilgpt2 (~500MB)"  
+echo "  - 요약 모델: bart-large-cnn (~300MB)"
+echo "  - 총 용량: 약 880MB"
     echo ""
     echo "📁 모델 저장 위치: ${MODELS_DIR}"
-    echo ""
-    echo "🚀 이제 다음 명령어로 Docker를 실행할 수 있습니다:"
-    echo "  docker compose up -d"
+echo ""
+echo "🚀 이제 다음 명령어로 Docker를 실행할 수 있습니다:"
+echo "  docker compose up -d"
     exit 0
 else
     echo "⚠️ 모델 설정이 완전히 완료되지 않았습니다."

@@ -19,5 +19,5 @@ elasticsearch==8.11.0
 # 최소한의 ML 패키지
 transformers==4.30.2
 torch==2.0.1
-sentence-transformers==2.2.2
+sentence-transformers>=2.3.0
 huggingface-hub==0.16.4

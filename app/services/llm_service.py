@@ -33,8 +33,20 @@ class LLMService:
             print("🔄 로컬 임베딩 모델 로딩 중...")
             embedding_path = os.path.join(models_dir, "embedding_model")
             if os.path.exists(embedding_path):
-                self.embedding_model = SentenceTransformer(embedding_path)
-                print("✅ 로컬 임베딩 모델 로딩 완료")
+                try:
+                    self.embedding_model = SentenceTransformer(embedding_path)
+                    print("✅ 로컬 임베딩 모델 로딩 완료")
+                except Exception as e:
+                    print(f"⚠️ 로컬 임베딩 모델 로딩 실패 (버전 호환성 문제 가능): {e}")
+                    print("   HuggingFace에서 최신 모델을 다운로드합니다...")
+                    # 기존 모델 삭제 (버전 호환성 문제 해결)
+                    import shutil
+                    try:
+                        shutil.rmtree(embedding_path)
+                        print(f"   기존 모델 디렉토리 삭제: {embedding_path}")
+                    except:
+                        pass
+                    self.embedding_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
             else:
                 print("⚠️ 로컬 임베딩 모델을 찾을 수 없습니다. 기본 모델 사용...")
                 self.embedding_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
@@ -46,12 +58,19 @@ class LLMService:
                 self.tokenizer = AutoTokenizer.from_pretrained(generation_path)
                 self.generation_model = AutoModelForCausalLM.from_pretrained(generation_path)
                 self.generation_model.to(self.device)
+                # pad_token 설정 (distilgpt2는 기본적으로 pad_token이 없음)
+                if self.tokenizer.pad_token is None:
+                    self.tokenizer.pad_token = self.tokenizer.eos_token
                 print("✅ 로컬 생성 모델 로딩 완료")
             else:
                 print("⚠️ 로컬 생성 모델을 찾을 수 없습니다. 기본 모델 사용...")
                 self.tokenizer = AutoTokenizer.from_pretrained('distilgpt2')
                 self.generation_model = AutoModelForCausalLM.from_pretrained('distilgpt2')
                 self.generation_model.to(self.device)
+                # pad_token 설정 (distilgpt2는 기본적으로 pad_token이 없음)
+                if self.tokenizer.pad_token is None:
+                    self.tokenizer.pad_token = self.tokenizer.eos_token
+                print("✅ 기본 생성 모델 로딩 완료")
             
             # 3. 요약 모델 로딩
             print("🔄 로컬 요약 모델 로딩 중...")

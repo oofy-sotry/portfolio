@@ -15,8 +15,10 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 
 # Python 의존성 설치 (CPU 전용 PyTorch)
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir torch==2.0.1 --index-url https://download.pytorch.org/whl/cpu
+# torch를 먼저 설치한 후 나머지 패키지 설치
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir torch==2.0.1 --index-url https://download.pytorch.org/whl/cpu && \
+    pip install --no-cache-dir -r requirements.txt
 
 # 애플리케이션 코드 복사
 COPY . .

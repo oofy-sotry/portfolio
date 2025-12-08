@@ -18,7 +18,7 @@ openai==0.28.0
 gunicorn==21.2.0
 elasticsearch==8.11.0
 transformers==4.30.2
-torch==2.0.1
+# torch는 Dockerfile에서 CPU 버전으로 별도 설치
 sentence-transformers==2.2.2
 huggingface-hub==0.16.4
 python-keycloak==3.6.0
