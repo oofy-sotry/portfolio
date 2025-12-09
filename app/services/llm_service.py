@@ -210,6 +210,10 @@ class LLMService:
             if "상세한 답변:" in response:
                 response = response.split("상세한 답변:")[-1].strip()
             
+            # 빈 응답 체크
+            if not response or len(response.strip()) == 0:
+                return self._get_fallback_response(prompt)
+            
             return response
             
         except Exception as e:

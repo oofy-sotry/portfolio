@@ -22,20 +22,40 @@ def chat():
 
 @chatbot_bp.route('/send', methods=['POST'])
 def send_message():
-    """챗봇 메시지 처리"""
+    """챗봇 메시지 처리 (일반 챗봇 - 간단한 답변)"""
+    from app.services.llm_service import LLMService
+    
     data = request.get_json()
     user_message = data.get('message', '').strip()
     
     if not user_message:
         return jsonify({'error': '메시지를 입력해주세요.'}), 400
     
-    # 간단한 키워드 매칭
+    # 간단한 키워드 매칭 (우선순위 1)
     response = get_faq_response(user_message)
     
-    # OpenAI API 연동 (선택사항)
+    # LLM을 사용한 응답 생성 (우선순위 2) - 100자 이내 간단한 답변
+    if not response:
+        try:
+            llm_service = LLMService()
+            # 일반 챗봇은 간단한 답변 (100자 이내)
+            response = llm_service.generate_response(user_message, max_length=100, mode="concise")
+            
+            # 문자 수 제한 (100자 이내)
+            if response and len(response) > 100:
+                response = response[:100].rsplit(' ', 1)[0] + "..."
+        except Exception as e:
+            print(f"일반 챗봇 LLM 오류: {e}")
+            response = None
+    
+    # OpenAI API 연동 (선택사항, 우선순위 3)
     if not response and os.getenv('OPENAI_API_KEY'):
         response = get_openai_response(user_message)
+        # OpenAI 응답도 100자 이내로 제한
+        if response and len(response) > 100:
+            response = response[:100].rsplit(' ', 1)[0] + "..."
     
+    # 기본 응답 (우선순위 4)
     if not response:
         response = "죄송합니다. 해당 질문에 대한 답변을 찾을 수 없습니다. 다른 질문을 해주시거나 연락처 페이지를 확인해주세요."
     
@@ -125,11 +145,18 @@ def ai_chat():
     es_service = ElasticsearchService()
     
     try:
+        # 고급 챗봇은 300자 이내 상세한 답변
+        max_chars = 300
+        
         if search_mode == 'faq':
             # FAQ 모드 - 기본 응답
             response = get_faq_response(user_message)
             if not response:
-                response = llm_service.generate_response(user_message, mode=mode)
+                # 고급 챗봇은 상세한 답변 (300자 이내)
+                response = llm_service.generate_response(user_message, max_length=300, mode=mode)
+                # 문자 수 제한
+                if response and len(response) > max_chars:
+                    response = response[:max_chars].rsplit(' ', 1)[0] + "..."
             
             return jsonify({
                 'response': response,
@@ -153,9 +180,13 @@ def ai_chat():
                     context += f"내용: {doc['_source'].get('content', '')[:200]}...\n\n"
                 
                 prompt = f"다음 문서들을 참고하여 '{user_message}'에 대해 답변해주세요:\n\n{context}"
-                response = llm_service.generate_response(prompt, mode=mode)
+                response = llm_service.generate_response(prompt, max_length=300, mode=mode)
             else:
-                response = llm_service.generate_response(user_message, mode=mode)
+                response = llm_service.generate_response(user_message, max_length=300, mode=mode)
+            
+            # 문자 수 제한
+            if response and len(response) > max_chars:
+                response = response[:max_chars].rsplit(' ', 1)[0] + "..."
             
             return jsonify({
                 'response': response,
@@ -165,8 +196,12 @@ def ai_chat():
             })
             
         elif search_mode == 'ai':
-            # AI 모드 - 순수 LLM 응답
-            response = llm_service.generate_response(user_message, mode=mode)
+            # AI 모드 - 순수 LLM 응답 (300자 이내 상세한 답변)
+            response = llm_service.generate_response(user_message, max_length=300, mode=mode)
+            
+            # 문자 수 제한
+            if response and len(response) > max_chars:
+                response = response[:max_chars].rsplit(' ', 1)[0] + "..."
             
             return jsonify({
                 'response': response,
