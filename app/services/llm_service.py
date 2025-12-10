@@ -34,8 +34,8 @@ class LLMService:
             embedding_path = os.path.join(models_dir, "embedding_model")
             if os.path.exists(embedding_path):
                 try:
-                    self.embedding_model = SentenceTransformer(embedding_path)
-                    print("✅ 로컬 임베딩 모델 로딩 완료")
+                self.embedding_model = SentenceTransformer(embedding_path)
+                print("✅ 로컬 임베딩 모델 로딩 완료")
                 except Exception as e:
                     print(f"⚠️ 로컬 임베딩 모델 로딩 실패 (버전 호환성 문제 가능): {e}")
                     print("   HuggingFace에서 최신 모델을 다운로드합니다...")

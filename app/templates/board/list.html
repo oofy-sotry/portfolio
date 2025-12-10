@@ -147,13 +147,13 @@
                     <ul class="list-unstyled mb-0">
                         <li class="mb-2">
                             <a href="{{ url_for('board.list_posts', sort=sort_by) }}" class="text-decoration-none">
-                                전체 ({{ posts.total }})
+                                전체 ({{ total_published }})
                             </a>
                         </li>
                         {% for category in categories %}
                         <li class="mb-2">
                             <a href="{{ url_for('board.list_posts', category=category.id, sort=sort_by) }}" class="text-decoration-none">
-                                {{ category.name }}
+                                {{ category.name }} ({{ category_counts.get(category.id, 0) }})
                             </a>
                         </li>
                         {% endfor %}

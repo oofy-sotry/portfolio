@@ -148,6 +148,47 @@ def edit():
     
     return render_template('profile/edit.html', profile=profile)
 
+@profile_bp.route('/portfolio', methods=['GET', 'POST'])
+@login_required
+def portfolio_manage():
+    """포트폴리오(경력 & 프로젝트) 관리 전용 페이지"""
+    try:
+        profile = Profile.get_active_profile()
+    except Exception as e:
+        return f"Error getting profile: {str(e)}", 500
+    
+    if request.method == 'POST':
+        try:
+            # 경력/프로젝트 업데이트
+            experiences = []
+            experience_count = int(request.form.get('experience_count', 0))
+            
+            for i in range(experience_count):
+                title = request.form.get(f'exp_title_{i}')
+                period = request.form.get(f'exp_period_{i}')
+                description = request.form.get(f'exp_description_{i}')
+                technologies = request.form.getlist(f'exp_technologies_{i}')
+                
+                if title and period and description:
+                    experiences.append({
+                        'title': title,
+                        'period': period,
+                        'description': description,
+                        'technologies': technologies
+                    })
+            
+            profile.experiences = experiences
+            
+            db.session.commit()
+            flash('포트폴리오가 성공적으로 업데이트되었습니다!', 'success')
+            return redirect(url_for('profile.portfolio_manage'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'포트폴리오 업데이트 중 오류가 발생했습니다: {str(e)}', 'error')
+    
+    return render_template('profile/portfolio_manage.html', profile=profile)
+
 @profile_bp.route('/api/skills', methods=['POST'])
 @login_required
 def add_skill():

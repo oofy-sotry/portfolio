@@ -93,29 +93,6 @@
                 </div>
             </div>
 
-            <!-- 경력 & 프로젝트 -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-briefcase"></i> 경력 & 프로젝트
-                    </h5>
-                </div>
-                <div class="card-body">
-                    {% for experience in profile.experiences %}
-                    <div class="border-start border-3 border-primary ps-3 mb-4">
-                        <h6 class="mb-1">{{ experience.title }}</h6>
-                        <small class="text-muted">{{ experience.period }}</small>
-                        <p class="mt-2 mb-2">{{ experience.description }}</p>
-                        <div class="d-flex flex-wrap gap-1">
-                            {% for tech in experience.technologies %}
-                                <span class="badge bg-secondary">{{ tech }}</span>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-
             <!-- 연락처 정보 -->
             <div class="card">
                 <div class="card-header">

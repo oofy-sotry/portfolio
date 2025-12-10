@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}포트폴리오 관리 - 개발자 포트폴리오{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-briefcase"></i> 포트폴리오 관리
+                </h1>
+                <div class="btn-group">
+                    <a href="{{ url_for('profile.manage') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> 프로필 관리로
+                    </a>
+                    <a href="{{ url_for('profile.preview') }}" class="btn btn-outline-primary" target="_blank">
+                        <i class="fas fa-eye"></i> 미리보기
+                    </a>
+                    <a href="{{ url_for('main.about') }}" class="btn btn-outline-secondary" target="_blank">
+                        <i class="fas fa-external-link-alt"></i> 자기소개 보기
+                    </a>
+                </div>
+            </div>
+
+            <form method="POST" id="portfolioForm">
+                <!-- 포트폴리오 (경력 & 프로젝트) -->
+                <div class="card mb-4" id="portfolio-section">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-briefcase"></i> 포트폴리오 (경력 & 프로젝트)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="experiences">
+                            {% for experience in profile.experiences %}
+                            <div class="experience-item border p-3 mb-3 rounded">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0">경력 {{ loop.index }}</h6>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeExperience(this)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">제목</label>
+                                        <input type="text" class="form-control" name="exp_title_{{ loop.index0 }}" 
+                                               value="{{ experience.title }}" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">기간</label>
+                                        <input type="text" class="form-control" name="exp_period_{{ loop.index0 }}" 
+                                               value="{{ experience.period }}" required>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">설명</label>
+                                    <textarea class="form-control" name="exp_description_{{ loop.index0 }}" rows="3" required>{{ experience.description }}</textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">사용 기술</label>
+                                    <div class="technologies-input">
+                                        {% for tech in experience.technologies %}
+                                        <div class="input-group mb-2">
+                                            <input type="text" class="form-control" name="exp_technologies_{{ loop.index0 }}" value="{{ tech }}">
+                                            <button type="button" class="btn btn-outline-danger" onclick="removeTech(this)">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addTech(this)">
+                                        <i class="fas fa-plus"></i> 기술 추가
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <button type="button" class="btn btn-outline-primary" onclick="addExperience()">
+                            <i class="fas fa-plus"></i> 경력 추가
+                        </button>
+                        <input type="hidden" id="experience_count" name="experience_count" value="{{ profile.experiences|length }}">
+                    </div>
+                </div>
+
+                <!-- 저장 버튼 -->
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save"></i> 포트폴리오 저장
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let experienceIndex = parseInt('{{ profile.experiences|length|default(0) }}', 10);
+
+// 경력 추가
+function addExperience() {
+    const container = document.getElementById('experiences');
+    const div = document.createElement('div');
+    div.className = 'experience-item border p-3 mb-3 rounded';
+    div.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">경력 ${experienceIndex + 1}</h6>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeExperience(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">제목</label>
+                <input type="text" class="form-control" name="exp_title_${experienceIndex}" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">기간</label>
+                <input type="text" class="form-control" name="exp_period_${experienceIndex}" required>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">설명</label>
+            <textarea class="form-control" name="exp_description_${experienceIndex}" rows="3" required></textarea>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">사용 기술</label>
+            <div class="technologies-input">
+                <div class="input-group mb-2">
+                    <input type="text" class="form-control" name="exp_technologies_${experienceIndex}">
+                    <button type="button" class="btn btn-outline-danger" onclick="removeTech(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addTech(this)">
+                <i class="fas fa-plus"></i> 기술 추가
+            </button>
+        </div>
+    `;
+    container.appendChild(div);
+    experienceIndex++;
+    updateExperienceCount();
+}
+
+// 경력 제거
+function removeExperience(button) {
+    button.closest('.experience-item').remove();
+    updateExperienceCount();
+}
+
+// 경력 수 업데이트
+function updateExperienceCount() {
+    const count = document.querySelectorAll('.experience-item').length;
+    document.getElementById('experience_count').value = count;
+}
+
+// 기술 추가 (경력 내)
+function addTech(button) {
+    const container = button.previousElementSibling;
+    const div = document.createElement('div');
+    div.className = 'input-group mb-2';
+    const nameAttr = container.querySelector('input').getAttribute('name');
+    div.innerHTML = `
+        <input type="text" class="form-control" name="${nameAttr}">
+        <button type="button" class="btn btn-outline-danger" onclick="removeTech(this)">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    container.appendChild(div);
+}
+
+// 기술 제거 (경력 내)
+function removeTech(button) {
+    button.parentElement.remove();
+}
+</script>
+{% endblock %}
+

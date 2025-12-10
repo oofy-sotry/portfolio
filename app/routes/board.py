@@ -35,11 +35,22 @@ def list_posts():
     
     categories = Category.query.filter_by(is_active=True).all()
     
+    # 카테고리별 게시글 수 (게시 상태만 집계)
+    category_counts_query = db.session.query(
+        Post.category_id,
+        db.func.count(Post.id)
+    ).filter_by(is_published=True).group_by(Post.category_id).all()
+    category_counts = {cid: count for cid, count in category_counts_query}
+    
+    total_published = Post.query.filter_by(is_published=True).count()
+    
     return render_template('board/list.html',
                          posts=posts,
                          categories=categories,
                          selected_category=category_id,
-                         sort_by=sort_by)
+                         sort_by=sort_by,
+                         category_counts=category_counts,
+                         total_published=total_published)
 
 @board_bp.route('/<int:post_id>')
 def view_post(post_id):
