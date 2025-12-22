@@ -23,6 +23,9 @@ class ElasticsearchService:
             mapping = {
                 "mappings": {
                     "properties": {
+                        "doc_type": {
+                            "type": "keyword"  # 'faq' 또는 'post'
+                        },
                         "title": {
                             "type": "text",
                             "analyzer": "korean"
@@ -48,6 +51,15 @@ class ElasticsearchService:
                         },
                         "like_count": {
                             "type": "integer"
+                        },
+                        "faq_id": {
+                            "type": "integer"
+                        },
+                        "post_id": {
+                            "type": "integer"
+                        },
+                        "score_hint": {
+                            "type": "float"
                         }
                     }
                 },

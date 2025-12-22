@@ -72,25 +72,15 @@
                             </button>
                         </div>
                         
-                        <!-- 빠른 질문 버튼 -->
-                        <div class="quick-questions mt-3">
-                            <small class="text-muted">빠른 질문:</small>
+                        <!-- FAQ 선택 버튼 (FAQ 모드에서만 표시) -->
+                        <div class="quick-questions mt-3" id="faqQuickWrapper">
+                            <small class="text-muted">FAQ 선택:</small>
                             <div class="d-flex flex-wrap gap-2 mt-2">
-                                <button class="btn btn-outline-secondary btn-sm quick-question" data-question="자기소개">
-                                    자기소개
+                                {% for question, answer in faq_data.items() %}
+                                <button class="btn btn-outline-secondary btn-sm faq-question" data-question="{{ question }}">
+                                    {{ question }}
                                 </button>
-                                <button class="btn btn-outline-secondary btn-sm quick-question" data-question="기술스택">
-                                    기술스택
-                                </button>
-                                <button class="btn btn-outline-secondary btn-sm quick-question" data-question="프로젝트">
-                                    프로젝트
-                                </button>
-                                <button class="btn btn-outline-secondary btn-sm quick-question" data-question="연락처">
-                                    연락처
-                                </button>
-                                <button class="btn btn-outline-secondary btn-sm quick-question" data-question="경력">
-                                    경력
-                                </button>
+                                {% endfor %}
                             </div>
                         </div>
                     </div>
@@ -169,7 +159,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatMessages = document.getElementById('chatMessages');
     const messageInput = document.getElementById('messageInput');
     const sendButton = document.getElementById('sendButton');
-    const quickQuestions = document.querySelectorAll('.quick-question');
+    const faqButtons = document.querySelectorAll('.faq-question');
+    const faqWrapper = document.getElementById('faqQuickWrapper');
+    const searchModeRadios = document.querySelectorAll('input[name="searchMode"]');
     
     let currentMode = 'concise';
     let currentSearchMode = 'faq';
@@ -182,11 +174,18 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // 검색 모드 변경
-    document.querySelectorAll('input[name="searchMode"]').forEach(radio => {
+    function updateFaqVisibility() {
+        if (!faqWrapper) return;
+        faqWrapper.style.display = (currentSearchMode === 'faq') ? 'block' : 'none';
+    }
+    
+    searchModeRadios.forEach(radio => {
         radio.addEventListener('change', function() {
             currentSearchMode = this.value;
+            updateFaqVisibility();
         });
     });
+    updateFaqVisibility();
     
     // 메시지 전송
     function sendMessage() {
@@ -333,8 +332,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // 빠른 질문 버튼
-    quickQuestions.forEach(button => {
+    // FAQ 선택 버튼 (FAQ 모드 전용)
+    faqButtons.forEach(button => {
         button.addEventListener('click', function() {
             const question = this.dataset.question;
             messageInput.value = question;

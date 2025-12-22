@@ -40,6 +40,20 @@
                     <li class="nav-item">
                         <a class="nav-link require-login" href="{{ url_for('main.contact') }}">연락처</a>
                     </li>
+                    {% if current_user.is_authenticated and current_user.is_admin %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-tools"></i> 관리
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('faq_admin.manage') }}">
+                                    <i class="fas fa-question-circle"></i> FAQ 관리
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    {% endif %}
                 </ul>
                 
                 <ul class="navbar-nav">

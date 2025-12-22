@@ -2,23 +2,21 @@ from flask import Blueprint, render_template, request, jsonify
 import requests
 import os
 import json
+from app.models import FAQ
+from app.services.elasticsearch_service import ElasticsearchService
 
 chatbot_bp = Blueprint('chatbot', __name__)
 
-# 간단한 FAQ 데이터
-FAQ_DATA = {
-    '자기소개': '안녕하세요! 저는 풀스택 개발자입니다. Flask, Python, JavaScript 등을 사용하여 웹 애플리케이션을 개발합니다.',
-    '기술스택': '주요 기술스택: Python, Flask, JavaScript, HTML/CSS, MySQL, Docker, Git',
-    '프로젝트': '이 포트폴리오 사이트는 Flask를 사용하여 개발한 풀스택 웹 애플리케이션입니다.',
-    '연락처': '이메일이나 연락처 정보는 연락처 페이지에서 확인하실 수 있습니다.',
-    '경력': '웹 개발 경험과 다양한 프로젝트를 통해 실무 역량을 쌓아왔습니다.',
-    '학습': '지속적인 학습을 통해 최신 기술 트렌드를 따라가고 있습니다.'
-}
+def _load_faq_data():
+    """DB에서 활성화된 FAQ를 읽어 dict로 반환 (기존 템플릿 호환용)"""
+    faqs = FAQ.query.filter_by(is_active=True).order_by(FAQ.id.asc()).all()
+    return {f.question: f.answer for f in faqs}
 
 @chatbot_bp.route('/')
 def chat():
     """챗봇 페이지"""
-    return render_template('chatbot/chat.html')
+    faq_data = _load_faq_data()
+    return render_template('chatbot/chat.html', faq_data=faq_data)
 
 @chatbot_bp.route('/send', methods=['POST'])
 def send_message():
@@ -31,22 +29,52 @@ def send_message():
     if not user_message:
         return jsonify({'error': '메시지를 입력해주세요.'}), 400
     
-    # 간단한 키워드 매칭 (우선순위 1)
-    response = get_faq_response(user_message)
+    # 1단계: Elasticsearch에서 FAQ/게시글 검색
+    es_service = ElasticsearchService()
+    search_result = es_service.search_documents(user_message, size=5)
+    high_score_faq_answer = None
+    related_docs = []
+
+    if search_result:
+        hits = search_result.get('hits', {}).get('hits', [])
+        related_docs = hits
+        if hits:
+            top_hit = hits[0]
+            score = top_hit.get('_score', 0)
+            source = top_hit.get('_source', {})
+            # doc_type이 faq이고 점수가 임계값 이상이면 FAQ 직접 응답 (LLM 사용 안 함)
+            if source.get('doc_type') == 'faq' and score >= 5.0:
+                high_score_faq_answer = source.get('content')
     
-    # LLM을 사용한 응답 생성 (우선순위 2) - 100자 이내 간단한 답변
-    if not response:
-        try:
-            llm_service = LLMService()
-            # 일반 챗봇은 간단한 답변 (100자 이내)
-            response = llm_service.generate_response(user_message, max_length=100, mode="concise")
-            
-            # 문자 수 제한 (100자 이내)
-            if response and len(response) > 100:
-                response = response[:100].rsplit(' ', 1)[0] + "..."
-        except Exception as e:
-            print(f"일반 챗봇 LLM 오류: {e}")
-            response = None
+    # 점수 높은 FAQ가 있으면 바로 응답
+    if high_score_faq_answer:
+        return jsonify({'response': high_score_faq_answer, 'related_docs': related_docs})
+    
+    # LLM을 사용한 응답 생성 (ES 검색 결과를 컨텍스트로 활용) - 100자 이내 간단한 답변
+    try:
+        llm_service = LLMService()
+        context = ""
+        if related_docs:
+            for doc in related_docs[:3]:
+                src = doc.get('_source', {})
+                title = src.get('title') or src.get('question') or ''
+                content = src.get('content', '')[:200]
+                context += f"제목: {title}\n내용: {content}\n\n"
+        
+        if context:
+            prompt = f"다음 FAQ/게시글 내용을 참고하여 사용자의 질문에 간단하게(100자 이내) 한국어로 답변해줘.\n\n[컨텍스트]\n{context}\n[질문]\n{user_message}\n[답변]"
+        else:
+            prompt = user_message
+
+        # 일반 챗봇은 간단한 답변 (100자 이내)
+        response = llm_service.generate_response(prompt, max_length=100, mode="concise")
+        
+        # 문자 수 제한 (100자 이내)
+        if response and len(response) > 100:
+            response = response[:100].rsplit(' ', 1)[0] + "..."
+    except Exception as e:
+        print(f"일반 챗봇 LLM 오류: {e}")
+        response = None
     
     # OpenAI API 연동 (선택사항, 우선순위 3)
     if not response and os.getenv('OPENAI_API_KEY'):
@@ -62,18 +90,25 @@ def send_message():
     return jsonify({'response': response})
 
 def get_faq_response(message):
-    """FAQ 데이터에서 응답 찾기"""
+    """
+    (백업용) 간단한 FAQ 매칭 로직
+    현재는 ES 기반 검색이 우선이며,
+    이 함수는 검색 실패 시의 보조 수단으로만 사용될 수 있습니다.
+    """
+    faqs = FAQ.query.filter_by(is_active=True).all()
     message_lower = message.lower()
-    
-    for keyword, answer in FAQ_DATA.items():
-        if keyword.lower() in message_lower:
-            return answer
-    
+
+    # 완전 포함 매칭
+    for faq in faqs:
+        if faq.question.lower() in message_lower:
+            return faq.answer
+
     # 부분 매칭
-    for keyword, answer in FAQ_DATA.items():
-        if any(word in message_lower for word in keyword.lower().split()):
-            return answer
-    
+    for faq in faqs:
+        words = faq.question.lower().split()
+        if any(word in message_lower for word in words):
+            return faq.answer
+
     return None
 
 def get_openai_response(message):
@@ -120,12 +155,14 @@ def get_openai_response(message):
 @chatbot_bp.route('/faq')
 def faq():
     """FAQ 페이지"""
-    return render_template('chatbot/faq.html', faq_data=FAQ_DATA)
+    faq_data = _load_faq_data()
+    return render_template('chatbot/faq.html', faq_data=faq_data)
 
 @chatbot_bp.route('/advanced')
 def advanced_chat():
     """고급 AI 챗봇 페이지"""
-    return render_template('chatbot/advanced_chat.html')
+    faq_data = _load_faq_data()
+    return render_template('chatbot/advanced_chat.html', faq_data=faq_data)
 
 @chatbot_bp.route('/ai-chat', methods=['POST'])
 def ai_chat():
@@ -149,17 +186,65 @@ def ai_chat():
         max_chars = 300
         
         if search_mode == 'faq':
-            # FAQ 모드 - 기본 응답
-            response = get_faq_response(user_message)
-            if not response:
-                # 고급 챗봇은 상세한 답변 (300자 이내)
-                response = llm_service.generate_response(user_message, max_length=300, mode=mode)
-                # 문자 수 제한
-                if response and len(response) > max_chars:
-                    response = response[:max_chars].rsplit(' ', 1)[0] + "..."
-            
+            # FAQ 모드 - 먼저 ES에서 FAQ/게시글 검색
+            search_result = es_service.search_documents(user_message, size=5)
+            related_docs = []
+            response = None
+
+            high_score_faq_answer = None
+
+            if search_result:
+                hits = search_result.get('hits', {}).get('hits', [])
+                related_docs = hits
+                if hits:
+                    top_hit = hits[0]
+                    score = top_hit.get('_score', 0)
+                    source = top_hit.get('_source', {})
+                    # doc_type이 faq이고 점수가 임계값 이상이면 FAQ 직접 응답 (LLM 사용 안 함)
+                    if source.get('doc_type') == 'faq' and score >= 5.0:
+                        high_score_faq_answer = source.get('content')
+
+            # 점수 높은 FAQ가 있으면 바로 응답
+            if high_score_faq_answer:
+                return jsonify({
+                    'response': high_score_faq_answer,
+                    'related_docs': related_docs,
+                    'mode': mode,
+                    'search_mode': search_mode
+                })
+
+            # 그 외에는 ES 결과를 컨텍스트로 하여 LLM에 전달
+            context = ""
+            if related_docs:
+                for doc in related_docs[:5]:
+                    src = doc.get('_source', {})
+                    title = src.get('title') or src.get('question') or ''
+                    content = (src.get('content') or '')[:300]
+                    context += f"제목: {title}\n내용: {content}\n\n"
+
+            if context:
+                prompt = (
+                    "다음 FAQ/게시글 내용을 참고하여 사용자의 질문에 대해 최대 300자 이내로 상세하게 한국어로 답변해줘.\n\n"
+                    f"[컨텍스트]\n{context}\n[질문]\n{user_message}\n[답변]"
+                )
+            else:
+                # ES 결과가 없으면 기존 DB 기반 FAQ 매칭을 시도
+                response = get_faq_response(user_message)
+                if response:
+                    return jsonify({
+                        'response': response,
+                        'mode': mode,
+                        'search_mode': search_mode
+                    })
+                prompt = user_message
+
+            response = llm_service.generate_response(prompt, max_length=300, mode=mode)
+            if response and len(response) > max_chars:
+                response = response[:max_chars].rsplit(' ', 1)[0] + "..."
+
             return jsonify({
                 'response': response,
+                'related_docs': related_docs,
                 'mode': mode,
                 'search_mode': search_mode
             })

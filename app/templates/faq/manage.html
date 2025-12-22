@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}FAQ 관리 - 개발자 포트폴리오{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-question-circle"></i> FAQ 관리
+                </h1>
+                <a href="{{ url_for('chatbot.faq') }}" class="btn btn-outline-primary" target="_blank">
+                    <i class="fas fa-eye"></i> 사용자용 FAQ 보기
+                </a>
+            </div>
+
+            <!-- 새 FAQ 추가 -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-plus"></i> 새 FAQ 추가</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('faq_admin.create') }}">
+                        <div class="mb-3">
+                            <label class="form-label">질문</label>
+                            <input type="text" name="question" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">답변</label>
+                            <textarea name="answer" class="form-control" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">카테고리 (선택)</label>
+                            <input type="text" name="category" class="form-control" placeholder="예: 소개, 기술, 프로젝트">
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 추가
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 기존 FAQ 목록 -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list"></i> 기존 FAQ 목록</h5>
+                </div>
+                <div class="card-body">
+                    {% if faqs %}
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width: 5%;">ID</th>
+                                    <th style="width: 20%;">질문</th>
+                                    <th>답변</th>
+                                    <th style="width: 12%;">카테고리</th>
+                                    <th style="width: 10%;">활성</th>
+                                    <th style="width: 15%;">작업</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for faq in faqs %}
+                                <tr>
+                                    <td>{{ faq.id }}</td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('faq_admin.update', faq_id=faq.id) }}">
+                                            <input type="text" name="question" class="form-control form-control-sm mb-2"
+                                                   value="{{ faq.question }}" required>
+                                    </td>
+                                    <td>
+                                            <textarea name="answer" class="form-control form-control-sm mb-2" rows="2" required>{{ faq.answer }}</textarea>
+                                    </td>
+                                    <td>
+                                            <input type="text" name="category" class="form-control form-control-sm mb-2"
+                                                   value="{{ faq.category or '' }}">
+                                    </td>
+                                    <td class="text-center">
+                                            <div class="form-check form-switch d-inline-block">
+                                                <input class="form-check-input" type="checkbox" name="is_active"
+                                                       id="active{{ faq.id }}" {% if faq.is_active %}checked{% endif %}>
+                                            </div>
+                                    </td>
+                                    <td>
+                                            <div class="d-flex gap-1">
+                                                <button type="submit" class="btn btn-sm btn-success">
+                                                    <i class="fas fa-save"></i>
+                                                </button>
+                                        </form>
+                                                <form method="POST" action="{{ url_for('faq_admin.delete', faq_id=faq.id) }}"
+                                                      onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                                                    <button type="submit" class="btn btn-sm btn-danger">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">등록된 FAQ가 없습니다. 위 폼을 사용해 첫 FAQ를 추가해보세요.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

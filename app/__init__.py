@@ -47,6 +47,7 @@ def create_app():
     from app.routes.chatbot import chatbot_bp
     from app.routes.search import search_bp
     from app.routes.profile import profile_bp
+    from app.routes.faq_admin import faq_admin_bp
     
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(main_bp)
@@ -54,6 +55,7 @@ def create_app():
     app.register_blueprint(chatbot_bp, url_prefix='/chatbot')
     app.register_blueprint(search_bp, url_prefix='/search')
     app.register_blueprint(profile_bp)
+    app.register_blueprint(faq_admin_bp)
     
     # 데이터베이스 연결 테스트
     with app.app_context():
