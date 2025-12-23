@@ -7,6 +7,9 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # 프로젝트 루트 디렉토리 (scripts의 상위 디렉토리)
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+# 주요 스크립트 경로
+FIX_KEYCLOAK_SCRIPT="${PROJECT_ROOT}/scripts/fix_keycloak_user.sh"
+SETUP_KEYCLOAK_SCRIPT="${PROJECT_ROOT}/scripts/setup_keycloak.py"
 
 # 프로젝트 루트로 이동
 cd "${PROJECT_ROOT}" || {
@@ -101,11 +104,10 @@ fi
 # MySQL 초기화 확인 및 사용자 생성
 echo ""
 echo "🔍 MySQL 초기화 확인 중..."
-
-# 스크립트 경로 확인 (start_service.sh가 scripts/ 또는 루트에서 실행될 수 있음)
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-FIX_KEYCLOAK_SCRIPT="$PROJECT_ROOT/scripts/fix_keycloak_user.sh"
+echo "   (경로 확인) SCRIPT_DIR=${SCRIPT_DIR}"
+echo "   (경로 확인) PROJECT_ROOT=${PROJECT_ROOT}"
+echo "   (경로 확인) FIX_KEYCLOAK_SCRIPT=${FIX_KEYCLOAK_SCRIPT}"
+echo "   (경로 확인) SETUP_KEYCLOAK_SCRIPT=${SETUP_KEYCLOAK_SCRIPT}"
 
 # fix_keycloak_user.sh 스크립트 사용 (코드 중복 제거)
 if [ -f "$FIX_KEYCLOAK_SCRIPT" ]; then
@@ -279,7 +281,16 @@ if [ "$ES_READY" = false ]; then
     fi
 fi
 
-# 5. Keycloak 시작 전 최종 확인 및 시작 (데이터베이스 초기화 후)
+# 5. 애플리케이션 DB 초기화/시드 (init_db.py)
+echo ""
+echo "📊 애플리케이션 DB 초기화/시드 실행 중... (init_db.py)"
+if docker compose run --rm web python init_db.py 2>/dev/null; then
+    echo "✅ init_db.py 실행 완료"
+else
+    echo "⚠️ init_db.py 실행 실패 (무시하고 계속 진행)"
+fi
+
+# 6. Keycloak 시작 전 최종 확인 및 시작 (데이터베이스 초기화 후)
 echo ""
 echo "🔍 Keycloak 시작 전 최종 확인 중..."
 
@@ -347,7 +358,7 @@ echo ""
 echo "🚀 Keycloak 서비스 시작 중..."
 docker compose up -d keycloak
 
-# 6. Keycloak 준비 대기
+# 7. Keycloak 준비 대기
 echo ""
 echo "⏳ Keycloak 서비스 준비 대기 중..."
 echo "   (MySQL 연동으로 인해 초기 시작에 시간이 걸릴 수 있습니다)"
@@ -440,17 +451,23 @@ if [ "$KC_READY" = false ]; then
     echo "⚠️  Keycloak이 준비되지 않은 상태로 계속 진행합니다..."
 fi
 
-# 7. Keycloak 설정 (Client Secret 생성)
+# 8. Keycloak 설정 (Client Secret 생성)
 echo ""
 echo "⚙️ Keycloak 설정 중..."
-if python3 setup_keycloak.py; then
-    echo "✅ Keycloak 설정 완료"
+if [ -f "$SETUP_KEYCLOAK_SCRIPT" ]; then
+    echo "   실행 경로: $SETUP_KEYCLOAK_SCRIPT"
+    if python3 "$SETUP_KEYCLOAK_SCRIPT"; then
+        echo "✅ Keycloak 설정 완료"
+    else
+        echo "❌ Keycloak 설정 실패 (setup_keycloak.py 실행 오류)"
+        exit 1
+    fi
 else
-    echo "❌ Keycloak 설정 실패"
-    exit 1
+    echo "❌ $SETUP_KEYCLOAK_SCRIPT 파일을 찾을 수 없습니다. Keycloak 설정을 건너뜁니다."
+    echo "   파일 위치를 확인 후 다시 실행하세요."
 fi
 
-# 8. 웹 애플리케이션 시작
+# 9. 웹 애플리케이션 시작
 echo ""
 echo "🌐 웹 애플리케이션 시작 중..."
 
@@ -470,7 +487,7 @@ echo "🌐 웹 애플리케이션 시작 중..."
 
 docker compose up -d web
 
-# 9. 웹 애플리케이션 준비 대기
+# 10. 웹 애플리케이션 준비 대기
 echo ""
 echo "⏳ 웹 애플리케이션 준비 대기 중..."
 MAX_WAIT=120  # 2분으로 증가 (cryptography 설치 및 초기화 시간 고려)
@@ -544,7 +561,7 @@ if [ "$WEB_READY" = false ]; then
     echo "⚠️ 웹 애플리케이션이 준비되지 않은 상태로 계속 진행합니다..."
 fi
 
-# 10. Nginx 시작 (선택사항)
+# 11. Nginx 시작 (선택사항)
 echo ""
 echo "🔧 Nginx 서비스 시작 중..."
 if docker compose ps nginx > /dev/null 2>&1; then
@@ -554,7 +571,7 @@ else
     echo "ℹ️ Nginx 서비스가 docker-compose.yml에 정의되어 있지 않습니다."
 fi
 
-# 11. 초기 데이터 설정 (선택사항)
+# 12. 초기 데이터 설정 (선택사항)
 echo ""
 read -p "초기 데이터를 설정하시겠습니까? (y/N): " -n 1 -r
 echo
@@ -567,7 +584,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     fi
 fi
 
-# 12. 환경 변수 확인
+# 13. 환경 변수 확인
 echo ""
 echo "🔍 환경 변수 확인 중..."
 if docker compose exec web env 2>/dev/null | grep KEYCLOAK_CLIENT_SECRET; then
@@ -576,12 +593,12 @@ else
     echo "⚠️ KeyCLOAK_CLIENT_SECRET을 확인할 수 없습니다."
 fi
 
-# 13. 서비스 상태 확인
+# 14. 서비스 상태 확인
 echo ""
 echo "📊 서비스 상태 확인 중..."
 docker compose ps
 
-# 14. 최종 요약
+# 15. 최종 요약
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "✅ 모든 서비스가 시작되었습니다!"

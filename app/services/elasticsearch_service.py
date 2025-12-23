@@ -28,11 +28,11 @@ class ElasticsearchService:
                         },
                         "title": {
                             "type": "text",
-                            "analyzer": "korean"
+                            "analyzer": "standard"
                         },
                         "content": {
                             "type": "text",
-                            "analyzer": "korean"
+                            "analyzer": "standard"
                         },
                         "tags": {
                             "type": "keyword"
@@ -60,27 +60,6 @@ class ElasticsearchService:
                         },
                         "score_hint": {
                             "type": "float"
-                        }
-                    }
-                },
-                "settings": {
-                    "analysis": {
-                        "analyzer": {
-                            "korean": {
-                                "type": "custom",
-                                "tokenizer": "standard",
-                                "filter": ["lowercase", "korean_stop", "korean_stemmer"]
-                            }
-                        },
-                        "filter": {
-                            "korean_stop": {
-                                "type": "stop",
-                                "stopwords": ["은", "는", "이", "가", "을", "를", "에", "의", "로", "으로", "와", "과", "도", "만", "부터", "까지"]
-                            },
-                            "korean_stemmer": {
-                                "type": "stemmer",
-                                "language": "korean"
-                            }
                         }
                     }
                 }
