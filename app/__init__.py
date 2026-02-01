@@ -19,7 +19,19 @@ def create_app():
     app = Flask(__name__)
     
     # 설정
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+    # 보안: 프로덕션 환경에서는 SECRET_KEY가 반드시 설정되어야 함
+    secret_key = os.getenv('SECRET_KEY')
+    if not secret_key:
+        import sys
+        # 개발 환경에서만 기본값 사용 (환경 변수로 구분)
+        if os.getenv('FLASK_ENV') != 'production' and os.getenv('ENVIRONMENT') != 'production':
+            secret_key = 'dev-secret-key-change-in-production'
+            print("⚠️ 경고: SECRET_KEY가 설정되지 않아 개발용 기본값을 사용합니다.")
+            print("   프로덕션 환경에서는 반드시 SECRET_KEY 환경 변수를 설정하세요.")
+        else:
+            print("❌ 오류: 프로덕션 환경에서 SECRET_KEY가 설정되지 않았습니다.")
+            sys.exit(1)
+    app.config['SECRET_KEY'] = secret_key
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'mysql+pymysql://root:password@localhost/portfolio_db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     

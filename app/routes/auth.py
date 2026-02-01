@@ -13,7 +13,10 @@ auth_bp = Blueprint('auth', __name__)
 # Keycloak 설정
 KEYCLOAK_REALM = os.getenv('KEYCLOAK_REALM', 'portfolio')
 KEYCLOAK_CLIENT_ID = os.getenv('KEYCLOAK_CLIENT_ID', 'portfolio-web')
-KEYCLOAK_CLIENT_SECRET = os.getenv('KEYCLOAK_CLIENT_SECRET', 'n11PXNqr3sqESefIjNg06LxUyTeIdVWk')
+# 보안: 환경 변수에서만 시크릿 키를 가져옴 (기본값 없음)
+KEYCLOAK_CLIENT_SECRET = os.getenv('KEYCLOAK_CLIENT_SECRET')
+if not KEYCLOAK_CLIENT_SECRET:
+    print("⚠️ 경고: KEYCLOAK_CLIENT_SECRET 환경 변수가 설정되지 않았습니다.")
 
 def get_keycloak_url():
     """동적으로 Keycloak URL 생성"""
@@ -63,6 +66,11 @@ def keycloak_callback():
         # 토큰 교환
         keycloak_url = get_keycloak_url()
         token_url = f"{keycloak_url}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/token"
+        # Keycloak 클라이언트 시크릿 확인
+        if not KEYCLOAK_CLIENT_SECRET:
+            flash('Keycloak 설정이 올바르지 않습니다. 관리자에게 문의하세요.', 'error')
+            return redirect(url_for('auth.login'))
+        
         token_data = {
             'grant_type': 'authorization_code',
             'client_id': KEYCLOAK_CLIENT_ID,
@@ -93,10 +101,17 @@ def keycloak_callback():
             user = User(
                 username=userinfo.get('preferred_username'),
                 email=userinfo.get('email'),
-                password_hash='keycloak_user'  # Keycloak 사용자는 비밀번호 없음
+                password_hash=None,  # Keycloak 사용자는 비밀번호 없음
+                is_keycloak_user=True
             )
             db.session.add(user)
             db.session.commit()
+        else:
+            # 기존 사용자가 Keycloak 사용자로 업데이트되지 않은 경우 업데이트
+            if not user.is_keycloak_user:
+                user.is_keycloak_user = True
+                user.password_hash = None
+                db.session.commit()
         
         # 로그인
         login_user(user)
@@ -123,7 +138,12 @@ def login():
         
         user = User.query.filter_by(username=username).first()
         
-        if user and user.check_password(password):
+        # Keycloak 사용자는 일반 로그인 불가
+        if user and user.is_keycloak_user:
+            if request.is_json:
+                return jsonify({'error': 'Keycloak 사용자는 Keycloak 로그인을 사용해주세요.'}), 401
+            flash('Keycloak 사용자는 Keycloak 로그인을 사용해주세요.', 'error')
+        elif user and user.check_password(password):
             login_user(user)
             if request.is_json:
                 return jsonify({'message': '로그인 성공', 'redirect': url_for('main.index')})

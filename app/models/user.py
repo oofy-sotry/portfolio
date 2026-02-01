@@ -11,8 +11,9 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128))
+    password_hash = db.Column(db.String(128), nullable=True)  # Keycloak 사용자는 NULL 허용
     is_admin = db.Column(db.Boolean, default=False)
+    is_keycloak_user = db.Column(db.Boolean, default=False)  # Keycloak 사용자 여부
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -27,6 +28,12 @@ class User(UserMixin, db.Model):
     
     def check_password(self, password):
         """비밀번호 확인"""
+        # Keycloak 사용자는 비밀번호 검증 불가
+        if self.is_keycloak_user:
+            return False
+        # password_hash가 None인 경우도 처리
+        if not self.password_hash:
+            return False
         return check_password_hash(self.password_hash, password)
     
     def __repr__(self):

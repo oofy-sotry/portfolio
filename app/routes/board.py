@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from app.models import Post, Comment, Like, Category
 from app import db
-from app.services.elasticsearch_service import ElasticsearchService
+from app.utils.indexing_utils import index_post_to_es, delete_post_from_es, update_post_in_es
 from datetime import datetime
 
 board_bp = Blueprint('board', __name__)
@@ -98,25 +98,7 @@ def write_post():
             db.session.commit()
 
             # Elasticsearch 인덱싱
-            try:
-                es = ElasticsearchService()
-                es.create_index()
-                doc = {
-                    "doc_type": "post",
-                    "title": post.title,
-                    "content": post.content,
-                    "tags": post.get_tags_list(),
-                    "category": post.category.name if post.category else None,
-                    "author": post.author.username if post.author else None,
-                    "created_at": post.created_at.isoformat() if post.created_at else None,
-                    "view_count": post.view_count,
-                    "like_count": post.get_like_count(),
-                    "post_id": post.id,
-                }
-                es.index_document(f"post-{post.id}", doc)
-            except Exception as es_e:
-                # 검색 인덱싱 실패는 치명적이지 않으므로 로그만 출력
-                print(f"Elasticsearch 인덱싱 실패 (post create): {es_e}")
+            index_post_to_es(post)
             
             if request.is_json:
                 return jsonify({'message': '게시글이 작성되었습니다.', 'redirect': url_for('board.view_post', post_id=post.id)})
@@ -146,29 +128,16 @@ def edit_post(post_id):
         post.title = data.get('title', post.title)
         post.content = data.get('content', post.content)
         post.tags = data.get('tags', post.tags)
-        post.category_id = data.get('category_id', post.category_id, type=int)
+        # category_id는 type 변환 후 기본값 적용
+        category_id = data.get('category_id', type=int)
+        if category_id:
+            post.category_id = category_id
         
         try:
             db.session.commit()
 
             # Elasticsearch 문서 업데이트
-            try:
-                es = ElasticsearchService()
-                doc = {
-                    "doc_type": "post",
-                    "title": post.title,
-                    "content": post.content,
-                    "tags": post.get_tags_list(),
-                    "category": post.category.name if post.category else None,
-                    "author": post.author.username if post.author else None,
-                    "created_at": post.created_at.isoformat() if post.created_at else None,
-                    "view_count": post.view_count,
-                    "like_count": post.get_like_count(),
-                    "post_id": post.id,
-                }
-                es.update_document(f"post-{post.id}", doc)
-            except Exception as es_e:
-                print(f"Elasticsearch 인덱스 업데이트 실패 (post edit): {es_e}")
+            update_post_in_es(post)
             
             if request.is_json:
                 return jsonify({'message': '게시글이 수정되었습니다.', 'redirect': url_for('board.view_post', post_id=post.id)})
@@ -198,11 +167,7 @@ def delete_post(post_id):
         db.session.commit()
 
         # Elasticsearch 문서 삭제
-        try:
-            es = ElasticsearchService()
-            es.delete_document(f"post-{post.id}")
-        except Exception as es_e:
-            print(f"Elasticsearch 문서 삭제 실패 (post delete): {es_e}")
+        delete_post_from_es(post.id)
         
         if request.is_json:
             return jsonify({'message': '게시글이 삭제되었습니다.', 'redirect': url_for('board.list_posts')})

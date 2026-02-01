@@ -2,30 +2,9 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from app import db
 from app.models import FAQ
-from app.services.elasticsearch_service import ElasticsearchService
+from app.utils.indexing_utils import index_faq_to_es, delete_faq_from_es
 
 faq_admin_bp = Blueprint('faq_admin', __name__, url_prefix='/admin/faq')
-
-
-def _index_faq_to_es(faq: FAQ):
-    """FAQ를 Elasticsearch에 인덱싱"""
-    es = ElasticsearchService()
-    es.create_index()
-    doc = {
-        "doc_type": "faq",
-        "title": faq.question,
-        "content": faq.answer,
-        "category": faq.category,
-        "created_at": faq.created_at.isoformat() if faq.created_at else None,
-        "faq_id": faq.id,
-    }
-    es.index_document(f"faq-{faq.id}", doc)
-
-
-def _delete_faq_from_es(faq_id: int):
-    """FAQ를 Elasticsearch에서 삭제"""
-    es = ElasticsearchService()
-    es.delete_document(f"faq-{faq_id}")
 
 
 @faq_admin_bp.before_request
@@ -59,7 +38,7 @@ def create():
     try:
         db.session.add(faq)
         db.session.commit()
-        _index_faq_to_es(faq)
+        index_faq_to_es(faq)
         flash("FAQ가 추가되었습니다.", "success")
     except Exception as e:
         db.session.rollback()
@@ -81,7 +60,7 @@ def update(faq_id):
 
     try:
         db.session.commit()
-        _index_faq_to_es(faq)
+        index_faq_to_es(faq)
         flash("FAQ가 수정되었습니다.", "success")
     except Exception as e:
         db.session.rollback()
@@ -97,7 +76,7 @@ def delete(faq_id):
     try:
         db.session.delete(faq)
         db.session.commit()
-        _delete_faq_from_es(faq_id)
+        delete_faq_from_es(faq_id)
         flash("FAQ가 삭제되었습니다.", "success")
     except Exception as e:
         db.session.rollback()
