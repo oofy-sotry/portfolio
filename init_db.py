@@ -19,6 +19,42 @@ def init_database():
             db.create_all()
             print("✅ 데이터베이스 테이블이 생성되었습니다.")
             
+            # 마이그레이션: is_keycloak_user 컬럼 추가 (기존 데이터베이스용)
+            try:
+                from sqlalchemy import text
+                # 컬럼 존재 여부 확인
+                result = db.session.execute(text("""
+                    SELECT COUNT(*) 
+                    FROM information_schema.COLUMNS 
+                    WHERE TABLE_SCHEMA = DATABASE()
+                    AND TABLE_NAME = 'users' 
+                    AND COLUMN_NAME = 'is_keycloak_user'
+                """))
+                column_exists = result.fetchone()[0] > 0
+                
+                if not column_exists:
+                    print("📝 마이그레이션: is_keycloak_user 컬럼 추가 중...")
+                    db.session.execute(text("""
+                        ALTER TABLE users 
+                        ADD COLUMN is_keycloak_user BOOLEAN DEFAULT FALSE 
+                        AFTER is_admin
+                    """))
+                    
+                    # password_hash를 NULL 허용으로 변경
+                    db.session.execute(text("""
+                        ALTER TABLE users 
+                        MODIFY COLUMN password_hash VARCHAR(128) NULL
+                    """))
+                    
+                    db.session.commit()
+                    print("✅ 마이그레이션 완료: is_keycloak_user 컬럼이 추가되었습니다.")
+                else:
+                    print("ℹ️ is_keycloak_user 컬럼이 이미 존재합니다.")
+            except Exception as migration_error:
+                print(f"⚠️ 마이그레이션 중 오류 (무시 가능): {migration_error}")
+                db.session.rollback()
+                # 마이그레이션 실패해도 계속 진행
+            
             # 기본 카테고리 생성
             categories = [
                 Category(name='공지사항', description='중요한 공지사항'),
