@@ -103,13 +103,13 @@
 
 ## Phase 5: API LLM 연동
 
-> 로컬 생성/요약 모델을 외부 API로 대체
+> 로컬 모델(기본 답변)은 유지하고, API LLM(고급 답변)을 추가
 
 ### 5-1. API LLM 서비스 구현
 - [ ] `api_llm_service.py`에 Claude API 연동
 - [ ] GPT API 연동
 - [ ] Gemini API 연동
-- [ ] LLM 서비스 선택 로직 (환경변수로 전환)
+- [ ] 기본 답변(로컬 KoGPT2) / 고급 답변(API LLM) 선택 로직
 
 ### 5-2. 챗봇 개인화
 - [ ] 챗봇 라우트에 `@login_required` 추가
