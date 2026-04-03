@@ -7,6 +7,7 @@ class Profile(db.Model):
     __tablename__ = 'profiles'
     
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), unique=True, nullable=True)
     name = db.Column(db.String(100), nullable=False, default="개발자 이름")
     title = db.Column(db.String(200), nullable=False, default="풀스택 웹 개발자")
     bio = db.Column(db.Text, default="안녕하세요! 사용자 중심의 웹 애플리케이션 개발을 추구하는 풀스택 개발자입니다.")
