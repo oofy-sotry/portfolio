@@ -19,6 +19,8 @@
                         <i class="fas fa-search"></i> 검색
                     </button>
                 </div>
+                <!-- 자동완성 드롭다운 -->
+                <div id="suggestionsDropdown" class="list-group position-absolute w-100" style="z-index:1000; display:none;"></div>
 
                 <!-- 필터 옵션 -->
                 <div class="row g-3">
@@ -72,13 +74,20 @@
                     <div class="card mb-3">
                         <div class="card-body">
                             <h5 class="card-title">
+                                {% if hit._source.post_id %}
+                                <a href="{{ url_for('board.view_post', post_id=hit._source.post_id) }}" class="text-decoration-none">
+                                {% else %}
                                 <a href="#" class="text-decoration-none">
+                                {% endif %}
                                     {% if hit.highlight and hit.highlight.title %}
                                         {{ hit.highlight.title[0]|safe }}
                                     {% else %}
                                         {{ hit._source.title }}
                                     {% endif %}
                                 </a>
+                                {% if hit._source.doc_type == 'faq' %}
+                                <span class="badge bg-warning text-dark ms-2">FAQ</span>
+                                {% endif %}
                             </h5>
                             <div class="card-text text-muted mb-2">
                                 {% if hit.highlight and hit.highlight.content %}
@@ -169,4 +178,45 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const input = document.getElementById('searchInput');
+    const dropdown = document.getElementById('suggestionsDropdown');
+    let debounceTimer;
+
+    input.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        const q = this.value.trim();
+
+        if (q.length < 2) {
+            dropdown.style.display = 'none';
+            return;
+        }
+
+        debounceTimer = setTimeout(function() {
+            fetch(`{{ url_for('search.search_suggestions') }}?q=${encodeURIComponent(q)}`)
+                .then(r => r.json())
+                .then(suggestions => {
+                    if (suggestions.length === 0) {
+                        dropdown.style.display = 'none';
+                        return;
+                    }
+                    dropdown.innerHTML = suggestions.map(s =>
+                        `<a href="{{ url_for('search.advanced_search') }}?q=${encodeURIComponent(s)}" class="list-group-item list-group-item-action">${s}</a>`
+                    ).join('');
+                    dropdown.style.display = 'block';
+                });
+        }, 300);
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+})();
+</script>
 {% endblock %}
