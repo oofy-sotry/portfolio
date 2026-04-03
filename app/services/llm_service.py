@@ -29,27 +29,20 @@ class LLMService:
         try:
             models_dir = "/app/models"
             
-            # 1. 임베딩 모델 로딩
-            print("🔄 로컬 임베딩 모델 로딩 중...")
+            # 1. 한글 임베딩 모델 로딩
+            EMBEDDING_MODEL_NAME = 'jhgan/ko-sroberta-multitask'
+            print(f"🔄 임베딩 모델 로딩 중... ({EMBEDDING_MODEL_NAME})")
             embedding_path = os.path.join(models_dir, "embedding_model")
             if os.path.exists(embedding_path):
                 try:
                     self.embedding_model = SentenceTransformer(embedding_path)
                     print("✅ 로컬 임베딩 모델 로딩 완료")
                 except Exception as e:
-                    print(f"⚠️ 로컬 임베딩 모델 로딩 실패 (버전 호환성 문제 가능): {e}")
-                    print("   HuggingFace에서 최신 모델을 다운로드합니다...")
-                    # 기존 모델 삭제 (버전 호환성 문제 해결)
-                    import shutil
-                    try:
-                        shutil.rmtree(embedding_path)
-                        print(f"   기존 모델 디렉토리 삭제: {embedding_path}")
-                    except:
-                        pass
-                    self.embedding_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+                    print(f"⚠️ 로컬 임베딩 모델 로딩 실패: {e}")
+                    self.embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
             else:
-                print("⚠️ 로컬 임베딩 모델을 찾을 수 없습니다. 기본 모델 사용...")
-                self.embedding_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+                print("⚠️ 로컬 모델 없음. HuggingFace에서 다운로드...")
+                self.embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
             
             # 2. 생성 모델 로딩
             print("🔄 로컬 생성 모델 로딩 중...")
