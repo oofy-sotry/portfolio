@@ -11,7 +11,7 @@
                     <h4 class="mb-0">글쓰기</h4>
                 </div>
                 <div class="card-body">
-                    <form id="write-form">
+                    <form id="board-form" data-action-url="{{ url_for('board.write_post') }}">
                         <div class="mb-3">
                             <label for="title" class="form-label">제목 *</label>
                             <input type="text" class="form-control" id="title" name="title" required>
@@ -49,55 +49,8 @@
     </div>
 </div>
 
-<script>
-document.getElementById('write-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    const data = {
-        title: formData.get('title'),
-        content: formData.get('content'),
-        category_id: parseInt(formData.get('category_id')),
-        tags: formData.get('tags')
-    };
-    
-    // 유효성 검사
-    if (!data.title.trim()) {
-        alert('제목을 입력해주세요.');
-        return;
-    }
-    
-    if (!data.content.trim()) {
-        alert('내용을 입력해주세요.');
-        return;
-    }
-    
-    if (!data.category_id) {
-        alert('카테고리를 선택해주세요.');
-        return;
-    }
-    
-    // 게시글 작성
-    fetch('/board/write', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            alert(data.error);
-        } else {
-            alert(data.message);
-            window.location.href = data.redirect;
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('게시글 작성 중 오류가 발생했습니다.');
-    });
-});
-</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/board-form.js') }}"></script>
 {% endblock %}
