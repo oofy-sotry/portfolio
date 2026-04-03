@@ -4,11 +4,12 @@ Flask를 사용한 풀스택 웹 애플리케이션으로, 개인 포트폴리�
 
 ## 주요 기능
 
-- **사용자 인증**: 로그인/회원가입, JWT 기반 인증
-- **게시판**: CRUD 기능, 댓글, 좋아요, 카테고리별 분류
-- **검색**: 키워드 및 태그 기반 검색
-- **챗봇**: FAQ 챗봇 (OpenAI API 연동 가능)
-- **반응형 디자인**: Bootstrap 기반 모바일 친화적 UI
+- **사용자 인증**: Keycloak OAuth 2.0 / 로컬 로그인
+- **게시판**: CRUD 기능, 댓글/대댓글, 좋아요, 카테고리별 분류
+- **검색**: Elasticsearch 기반 전문 검색 (카테고리 필터, 태그, 날짜 범위)
+- **챗봇**: FAQ 자동 응답 + AI 챗봇 (LLM 모델 연동)
+- **프로필**: 사용자별 프로필 관리 (기술 스택, 경력, 포트폴리오)
+- **반응형 디자인**: Bootstrap 5 기반 모바일 친화적 UI
 
 ## 기술 스택
 
@@ -146,8 +147,9 @@ KEYCLOAK_CLIENT_SECRET=auto-generated-by-setup-keycloak
 # Elasticsearch
 ELASTICSEARCH_URL=http://elasticsearch:9200
 
-# OpenAI API (선택사항)
-OPENAI_API_KEY=your-openai-api-key
+# LLM API (선택사항)
+# OPENAI_API_KEY=your-openai-api-key
+# ANTHROPIC_API_KEY=your-anthropic-api-key
 ```
 
 자세한 내용은 [docs/SERVICE_ARCHITECTURE.md](docs/SERVICE_ARCHITECTURE.md)를 참고하세요.
@@ -186,19 +188,35 @@ OPENAI_API_KEY=your-openai-api-key
 ## API 엔드포인트
 
 ### 인증
-- `POST /auth/login` - 로그인
-- `POST /auth/register` - 회원가입
+- `GET/POST /auth/login` - 로그인
+- `GET/POST /auth/register` - 회원가입
 - `GET /auth/logout` - 로그아웃
+- `GET /auth/keycloak-login` - Keycloak 로그인
+- `GET /auth/keycloak-callback` - Keycloak 콜백
 
 ### 게시판
 - `GET /board/` - 게시글 목록
 - `GET /board/<id>` - 게시글 상세
-- `POST /board/write` - 게시글 작성
+- `GET/POST /board/write` - 게시글 작성
+- `GET/POST /board/<id>/edit` - 게시글 수정
+- `POST /board/<id>/delete` - 게시글 삭제
 - `POST /board/<id>/like` - 좋아요 토글
 - `POST /board/<id>/comment` - 댓글 작성
 
+### 검색
+- `GET /search/` - 검색 페이지
+- `GET /search/api/suggestions` - 검색어 자동완성
+- `GET /search/api/related` - 관련 문서 추천
+- `GET /search/api/popular` - 인기 검색어
+
 ### 챗봇
-- `POST /chatbot/send` - 메시지 전송
+- `POST /chatbot/send` - 일반 챗봇 메시지
+- `POST /chatbot/ai-chat` - AI 챗봇 (FAQ/검색/AI 모드)
+
+### 프로필
+- `GET /profile/` - 프로필 관리
+- `GET/POST /profile/edit` - 프로필 편집
+- `GET/POST /profile/portfolio` - 포트폴리오 관리
 
 ## 배포
 
@@ -234,11 +252,11 @@ docker compose logs -f
 
 - **웹 애플리케이션**: http://localhost:5000
 - **Keycloak 관리 콘솔**: http://localhost:8080/admin
+- **Kibana**: http://localhost:5601
 - **Elasticsearch**: http://localhost:9200
 
 **기본 계정:**
-- Keycloak 관리자: `admin` / `admin123`
-- 테스트 사용자: `testuser` / `test123`
+- 관리자: `admin` / `admin123`
 
 ### 클라우드 배포
 
