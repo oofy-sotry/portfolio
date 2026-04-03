@@ -1,18 +1,19 @@
 """
-Elasticsearch 인덱싱 유틸리티
-게시글, FAQ 등의 문서를 Elasticsearch에 인덱싱하는 공통 함수
+문서 인덱싱 유틸리티
+게시글, FAQ 등의 문서를 Elasticsearch와 ChromaDB에 동기화하는 공통 함수
 """
 
 from app.services.elasticsearch_service import ElasticsearchService
+from app.services.vector_store import VectorStore
 
 
 def index_post_to_es(post):
     """
-    게시글을 Elasticsearch에 인덱싱
-    
+    게시글을 Elasticsearch와 ChromaDB에 인덱싱
+
     Args:
         post: Post 모델 인스턴스
-    
+
     Returns:
         bool: 인덱싱 성공 여부
     """
@@ -31,10 +32,25 @@ def index_post_to_es(post):
             "like_count": post.get_like_count(),
             "post_id": post.id,
         }
-        return es.index_document(f"post-{post.id}", doc)
+        es.index_document(f"post-{post.id}", doc)
     except Exception as e:
-        print(f"❌ 게시글 Elasticsearch 인덱싱 실패: {e}")
-        return False
+        print(f"❌ 게시글 ES 인덱싱 실패: {e}")
+
+    # ChromaDB 벡터 저장
+    try:
+        vs = VectorStore()
+        text = f"{post.title}\n{post.content}"
+        metadata = {
+            "doc_type": "post",
+            "post_id": post.id,
+            "title": post.title,
+            "category": post.category.name if post.category else "",
+        }
+        vs.add_document(f"post-{post.id}", text, metadata)
+    except Exception as e:
+        print(f"❌ 게시글 ChromaDB 인덱싱 실패: {e}")
+
+    return True
 
 
 def index_faq_to_es(faq):
