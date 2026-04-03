@@ -112,21 +112,20 @@ def delete_post_from_es(post_id):
 
 
 def delete_faq_from_es(faq_id):
-    """
-    FAQ를 Elasticsearch에서 삭제
-    
-    Args:
-        faq_id: FAQ ID
-    
-    Returns:
-        bool: 삭제 성공 여부
-    """
+    """FAQ를 Elasticsearch와 ChromaDB에서 삭제"""
     try:
         es = ElasticsearchService()
-        return es.delete_document(f"faq-{faq_id}")
+        es.delete_document(f"faq-{faq_id}")
     except Exception as e:
-        print(f"❌ FAQ Elasticsearch 삭제 실패: {e}")
-        return False
+        print(f"❌ FAQ ES 삭제 실패: {e}")
+
+    try:
+        vs = VectorStore()
+        vs.delete_document(f"faq-{faq_id}")
+    except Exception as e:
+        print(f"❌ FAQ ChromaDB 삭제 실패: {e}")
+
+    return True
 
 
 def update_post_in_es(post):
