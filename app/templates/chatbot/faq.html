@@ -72,10 +72,14 @@
     </div>
 </div>
 
+<div id="faq-config" data-chat-url="{{ url_for('chatbot.chat') }}" style="display:none;"></div>
+{% endblock %}
+
+{% block extra_js %}
 <script>
 function askQuestion(question) {
-    // 챗봇 페이지로 이동하면서 질문 전달
-    window.location.href = `{{ url_for('chatbot.chat') }}?q=${encodeURIComponent(question)}`;
+    const chatUrl = document.getElementById('faq-config').dataset.chatUrl;
+    window.location.href = chatUrl + '?q=' + encodeURIComponent(question);
 }
 </script>
 {% endblock %}
