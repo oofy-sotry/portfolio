@@ -50,7 +50,7 @@ def delete_profile_image(filename):
 def manage():
     """프로필 관리 페이지"""
     try:
-        profile = Profile.get_active_profile()
+        profile = Profile.get_user_profile(current_user.id)
         return render_template('profile/manage.html', profile=profile)
     except Exception as e:
         return f"Error in manage: {str(e)}", 500
@@ -60,7 +60,7 @@ def manage():
 def edit():
     """프로필 편집"""
     try:
-        profile = Profile.get_active_profile()
+        profile = Profile.get_user_profile(current_user.id)
     except Exception as e:
         return f"Error getting profile: {str(e)}", 500
     
@@ -153,7 +153,7 @@ def edit():
 def portfolio_manage():
     """포트폴리오(경력 & 프로젝트) 관리 전용 페이지"""
     try:
-        profile = Profile.get_active_profile()
+        profile = Profile.get_user_profile(current_user.id)
     except Exception as e:
         return f"Error getting profile: {str(e)}", 500
     
@@ -194,7 +194,7 @@ def portfolio_manage():
 def add_skill():
     """기술 스택 추가 (AJAX)"""
     try:
-        profile = Profile.get_active_profile()
+        profile = Profile.get_user_profile(current_user.id)
         category = request.json.get('category')
         skill = request.json.get('skill')
         
@@ -223,7 +223,7 @@ def add_skill():
 def remove_skill():
     """기술 스택 제거 (AJAX)"""
     try:
-        profile = Profile.get_active_profile()
+        profile = Profile.get_user_profile(current_user.id)
         category = request.json.get('category')
         skill = request.json.get('skill')
         
@@ -243,7 +243,7 @@ def remove_skill():
 def add_experience():
     """경력/프로젝트 추가 (AJAX)"""
     try:
-        profile = Profile.get_active_profile()
+        profile = Profile.get_user_profile(current_user.id)
         data = request.json
         
         if not profile.experiences:
@@ -274,7 +274,7 @@ def add_experience():
 def remove_experience(index):
     """경력/프로젝트 제거 (AJAX)"""
     try:
-        profile = Profile.get_active_profile()
+        profile = Profile.get_user_profile(current_user.id)
         
         if profile.experiences and 0 <= index < len(profile.experiences):
             removed = profile.experiences.pop(index)
@@ -296,7 +296,7 @@ def remove_experience(index):
 def delete_image():
     """프로필 이미지 삭제"""
     try:
-        profile = Profile.get_active_profile()
+        profile = Profile.get_user_profile(current_user.id)
         
         # 기존 이미지 파일 삭제
         if profile.profile_image_filename:
@@ -324,5 +324,5 @@ def delete_image():
 @login_required
 def preview():
     """프로필 미리보기"""
-    profile = Profile.get_active_profile()
+    profile = Profile.get_user_profile(current_user.id)
     return render_template('main/about.html', profile=profile)
