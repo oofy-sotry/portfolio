@@ -26,6 +26,8 @@ DATABASE_URL=mysql+pymysql://root:password@db:3306/portfolio_db
 SECRET_KEY=your-secret-key-change-in-production
 FLASK_ENV=production
 ELASTICSEARCH_URL=http://elasticsearch:9200
+CHROMADB_HOST=chromadb
+CHROMADB_PORT=8000
 EOF
     echo "✅ .env 생성 완료"
 fi
@@ -37,8 +39,8 @@ docker compose down 2>/dev/null
 
 # 인프라 시작 (DB, Elasticsearch)
 echo ""
-echo "📦 인프라 서비스 시작 (DB, Elasticsearch)..."
-docker compose up -d db elasticsearch
+echo "📦 인프라 서비스 시작 (DB, Elasticsearch, ChromaDB)..."
+docker compose up -d db elasticsearch chromadb
 
 # MySQL 대기
 echo ""
