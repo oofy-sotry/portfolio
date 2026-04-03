@@ -34,7 +34,14 @@
 - **기능**: 게시글 및 콘텐츠 전문 검색
 - **설정**: 단일 노드 모드, 보안 비활성화 (개발 환경)
 
-### 4. 인증 서버 (keycloak)
+### 4. 벡터 데이터베이스 (chromadb)
+- **기술 스택**: ChromaDB 0.4.22
+- **포트**: 8000
+- **기능**: RAG 파이프라인을 위한 벡터 저장 및 유사도 검색
+- **데이터**: 게시글/FAQ를 임베딩 벡터로 저장
+- **검색**: cosine similarity 기반 시맨틱 검색
+
+### 5. 인증 서버 (keycloak)
 - **기술 스택**: Keycloak 24.0
 - **포트**: 8080
 - **기능**: 
@@ -46,7 +53,7 @@
 - **관리자 계정**: admin / admin123
 - **의존성**: MySQL (healthcheck 완료 후 시작)
 
-### 5. 리버스 프록시 (nginx)
+### 6. 리버스 프록시 (nginx)
 - **기술 스택**: Nginx Alpine
 - **포트**: 80, 443
 - **기능**: 
@@ -141,10 +148,12 @@
 - `DATABASE_URL`: MySQL 연결 문자열
 - `SECRET_KEY`: Flask 세션 암호화 키
 - `ELASTICSEARCH_URL`: Elasticsearch 서버 URL
+- `CHROMADB_HOST`: ChromaDB 호스트 (chromadb)
+- `CHROMADB_PORT`: ChromaDB 포트 (8000)
 
 ### 선택적 환경 변수
-- `OPENAI_API_KEY`: OpenAI API 키 (챗봇 기능)
-- `HUGGINGFACE_API_KEY`: HuggingFace API 키 (LLM 모델)
+- `OPENAI_API_KEY`: OpenAI API 키 (고급 챗봇)
+- `ANTHROPIC_API_KEY`: Anthropic API 키 (Claude)
 - `FLASK_ENV`: Flask 환경 (development/production)
 
 ## 네트워크 구성
@@ -157,8 +166,8 @@
   │   └─ Keycloak (8080)
   │
   ├─ MySQL (3306)
-  │
-  └─ Elasticsearch (9200)
+  ├─ Elasticsearch (9200)
+  └─ ChromaDB (8000)
 ```
 
 ## 볼륨 및 데이터 영속성
