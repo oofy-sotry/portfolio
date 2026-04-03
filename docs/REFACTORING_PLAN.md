@@ -73,16 +73,19 @@
 
 > 현재 영어 전용 모델 → 한글 지원 모델로 교체
 
-### 3.5-1. 현재 모델 문제점
-- `distilgpt2` (생성): 영어 전용 82M, 한글 이해 불가
-- `facebook/bart-large-cnn` (요약): 영어 뉴스 전용, 한글 불가
-- `all-MiniLM-L6-v2` (임베딩): 영어 중심, 한글 유사도 부정확
+### 3.5-1. 모델 교체 완료 ✅ (2026-04-03)
 
-### 3.5-2. 임베딩 모델 교체
-- [ ] `all-MiniLM-L6-v2` → 한글 임베딩 모델 (예: `jhgan/ko-sroberta-multitask`)
-- [ ] `llm_service.py` 모델 경로 업데이트
-- [ ] 생성/요약 모델(`distilgpt2`, `bart-large-cnn`) 제거 (Phase 4에서 API LLM이 대체)
-- [ ] 모델 미로드 시 fallback 응답 개선
+| 용도 | 이전 (영어) | 이후 (한글) |
+|------|-----------|-----------|
+| 임베딩 | all-MiniLM-L6-v2 | jhgan/ko-sroberta-multitask |
+| 생성 | distilgpt2 | skt/kogpt2-base-v2 |
+| 요약 | facebook/bart-large-cnn | digit82/kobart-summarization |
+
+- [x] 임베딩 모델 한글 교체
+- [x] 생성 모델 한글 교체 (KoGPT2 — 기본 답변용)
+- [x] 요약 모델 한글 교체 (KoBART)
+- [x] 미사용 get_similarity_score() 제거
+- [x] 모델 선택 가이드 문서(MODEL_GUIDE.md) 작성 (A/B 조합)
 
 ---
 
