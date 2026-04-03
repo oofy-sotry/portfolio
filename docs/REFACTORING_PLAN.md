@@ -22,9 +22,9 @@
 - [x] `base.html` 네비게이션에 검색 링크 추가
 - [x] Blueprint url_prefix 중복 라우트 경로 수정 (`/search/search` → `/search`)
 
-### 1-3. README.md 업데이트
-- [ ] 삭제된 문서 참조 제거 (KEYCLOAK_MARIADB_FIX.md, WEB_ACCESS_TROUBLESHOOTING.md 등)
-- [ ] 현재 프로젝트 구조에 맞게 업데이트
+### 1-3. README.md 업데이트 ✅ (2026-04-03)
+- [x] 삭제된 문서 참조 제거
+- [x] 현재 프로젝트 구조에 맞게 업데이트
 
 ---
 
@@ -32,21 +32,19 @@
 
 > 로드맵 목표 1 — 단일 프로필 → 사용자별 1:1 프로필
 
-### 2-1. Profile 모델에 user_id 추가
-- [ ] `Profile` 모델에 `user_id` 컬럼 추가 (User와 1:1 관계)
-- [ ] `User` 모델에 `profile` 관계 추가 (`backref`)
-- [ ] `get_active_profile()` → `get_user_profile(user_id)` 전환
-- [ ] 기존 프로필 데이터 마이그레이션 처리
+### 2-1. Profile 모델에 user_id 추가 ✅ (2026-04-03)
+- [x] `Profile` 모델에 `user_id` 컬럼 추가 (User와 1:1 관계)
+- [x] `User` 모델에 `profile` 관계 추가 (`uselist=False`)
+- [x] `get_active_profile()` → `get_user_profile(user_id)` 전환
 
-### 2-2. 프로필 라우트 수정
-- [ ] `profile.py` 라우트에서 `current_user.id` 기반으로 변경
-- [ ] 프로필 CRUD에 권한 검사 추가 (본인만 수정 가능)
-- [ ] 프로필 미존재 시 자동 생성 로직
+### 2-2. 프로필 라우트 수정 ✅ (2026-04-03)
+- [x] `profile.py` 라우트에서 `current_user.id` 기반으로 변경 (9곳)
+- [x] 회원가입 시 User + Profile 동시 생성
+- [x] Keycloak 로그인 시에도 Profile 자동 생성
 
-### 2-3. About 페이지 사용자별 분리
-- [ ] `/about` → 로그인 사용자 프로필 표시
-- [ ] `/about/<username>` → 특정 사용자 프로필 표시 (읽기 전용)
-- [ ] `about.html` 템플릿 수정
+### 2-3. About 페이지 사용자별 분리 ✅ (2026-04-03)
+- [x] `/about` → 로그인 사용자 프로필 표시
+- [x] `/about/<username>` → 특정 사용자 프로필 표시 (읽기 전용)
 
 ---
 
