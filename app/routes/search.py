@@ -109,44 +109,60 @@ def popular_searches():
 
 @search_bp.route('/ai')
 def ai_search():
-    """AI 기반 게시글 검색 — ES 결과를 LLM이 요약하여 응답"""
+    """RAG 기반 게시글 검색 — ChromaDB에서 관련 문서 검색 → LLM이 답변 생성"""
     query = request.args.get('q', '')
     mode = request.args.get('mode', 'concise')
 
     if not query:
         return jsonify({'error': '검색어를 입력해주세요.'})
 
-    es = _get_es()
     llm = _get_llm()
 
-    # 1. Elasticsearch로 관련 게시글 검색
-    search_result = es.search_documents(query, size=5)
+    # 1. ChromaDB에서 벡터 유사도로 관련 문서 검색 (Retrieval)
     relevant_docs = []
+    try:
+        from app.services.vector_store import VectorStore
+        vs = VectorStore()
+        results = vs.search(query, n_results=5)
 
-    if search_result:
-        relevant_docs = search_result.get('hits', {}).get('hits', [])
+        if results and results.get('documents') and results['documents'][0]:
+            for i, doc_text in enumerate(results['documents'][0]):
+                metadata = results['metadatas'][0][i] if results.get('metadatas') else {}
+                relevant_docs.append({
+                    'text': doc_text,
+                    'title': metadata.get('title', ''),
+                    'doc_type': metadata.get('doc_type', ''),
+                })
+    except Exception as e:
+        print(f"⚠️ ChromaDB 검색 실패, ES 폴백: {e}")
+        search_result = _get_es().search_documents(query, size=5)
+        if search_result:
+            for hit in search_result.get('hits', {}).get('hits', []):
+                src = hit.get('_source', {})
+                relevant_docs.append({
+                    'text': src.get('content', ''),
+                    'title': src.get('title', ''),
+                    'doc_type': src.get('doc_type', ''),
+                })
 
-    # 2. 관련 문서 요약
-    summarized_docs = []
-    for doc in relevant_docs:
-        content = doc['_source'].get('content', '')
-        summary = llm.summarize_text(content, max_length=100)
-        doc['_source']['summary'] = summary
-        summarized_docs.append(doc)
-
-    # 3. LLM으로 최종 응답 생성
+    # 2. 검색된 문서를 LLM 컨텍스트로 전달하여 답변 생성 (Augmented Generation)
     context = ""
-    for doc in summarized_docs:
-        context += f"제목: {doc['_source'].get('title', '')}\n"
-        context += f"요약: {doc['_source'].get('summary', '')}\n\n"
+    for doc in relevant_docs:
+        title = doc.get('title', '')
+        text = doc.get('text', '')[:300]
+        context += f"제목: {title}\n내용: {text}\n\n"
 
-    prompt = f"다음 문서들을 참고하여 '{query}'에 대해 답변해주세요:\n\n{context}"
+    if context:
+        prompt = f"다음 문서들을 참고하여 '{query}'에 대해 한국어로 답변해주세요:\n\n{context}"
+    else:
+        prompt = query
+
     ai_response = llm.generate_response(prompt, mode=mode)
 
     return jsonify({
         'query': query,
         'ai_response': ai_response,
-        'relevant_docs': summarized_docs,
+        'relevant_docs': relevant_docs,
         'mode': mode
     })
 
