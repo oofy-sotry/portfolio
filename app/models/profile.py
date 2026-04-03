@@ -116,18 +116,8 @@ class Profile(db.Model):
     
     @staticmethod
     def get_user_profile(user_id):
-        """사용자별 프로필 반환 (없으면 자동 생성)"""
-        profile = Profile.query.filter_by(user_id=user_id).first()
-        if not profile:
-            from app.models.user import User
-            user = User.query.get(user_id)
-            profile = Profile(
-                user_id=user_id,
-                name=user.username if user else "개발자 이름"
-            )
-            db.session.add(profile)
-            db.session.commit()
-        return profile
+        """사용자별 프로필 반환"""
+        return Profile.query.filter_by(user_id=user_id).first()
     
     def __repr__(self):
         return f'<Profile {self.name}>'
