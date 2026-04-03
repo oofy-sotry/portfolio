@@ -14,7 +14,9 @@
                 <div class="input-group mb-3">
                     <input type="text" name="q" class="form-control form-control-lg"
                            placeholder="검색어를 입력하세요..." value="{{ query }}"
-                           id="searchInput" autocomplete="off">
+                           id="searchInput" autocomplete="off"
+                           data-suggestions-url="{{ url_for('search.search_suggestions') }}"
+                           data-search-url="{{ url_for('search.advanced_search') }}">
                     <button type="submit" class="btn btn-primary btn-lg">
                         <i class="fas fa-search"></i> 검색
                     </button>
@@ -181,42 +183,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-(function() {
-    const input = document.getElementById('searchInput');
-    const dropdown = document.getElementById('suggestionsDropdown');
-    let debounceTimer;
-
-    input.addEventListener('input', function() {
-        clearTimeout(debounceTimer);
-        const q = this.value.trim();
-
-        if (q.length < 2) {
-            dropdown.style.display = 'none';
-            return;
-        }
-
-        debounceTimer = setTimeout(function() {
-            fetch(`{{ url_for('search.search_suggestions') }}?q=${encodeURIComponent(q)}`)
-                .then(r => r.json())
-                .then(suggestions => {
-                    if (suggestions.length === 0) {
-                        dropdown.style.display = 'none';
-                        return;
-                    }
-                    dropdown.innerHTML = suggestions.map(s =>
-                        `<a href="{{ url_for('search.advanced_search') }}?q=${encodeURIComponent(s)}" class="list-group-item list-group-item-action">${s}</a>`
-                    ).join('');
-                    dropdown.style.display = 'block';
-                });
-        }, 300);
-    });
-
-    document.addEventListener('click', function(e) {
-        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.style.display = 'none';
-        }
-    });
-})();
-</script>
+<script src="{{ url_for('static', filename='js/search.js') }}"></script>
 {% endblock %}
