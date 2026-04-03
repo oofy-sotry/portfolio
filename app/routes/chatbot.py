@@ -250,29 +250,41 @@ def ai_chat():
             })
             
         elif search_mode == 'search':
-            # 검색 모드 - Elasticsearch 검색 + LLM 응답
-            search_result = es_service.search_documents(user_message, size=3)
+            # RAG 모드 - ChromaDB 벡터 검색 + LLM 응답 생성
             related_docs = []
-            
-            if search_result:
-                related_docs = search_result.get('hits', {}).get('hits', [])
-            
-            # 검색 결과 기반 응답 생성
-            if related_docs:
-                context = ""
-                for doc in related_docs:
-                    context += f"제목: {doc['_source'].get('title', '')}\n"
-                    context += f"내용: {doc['_source'].get('content', '')[:200]}...\n\n"
-                
-                prompt = f"다음 문서들을 참고하여 '{user_message}'에 대해 답변해주세요:\n\n{context}"
-                response = llm_service.generate_response(prompt, max_length=300, mode=mode)
+            context = ""
+
+            try:
+                from app.services.vector_store import VectorStore
+                vs = VectorStore()
+                results = vs.search(user_message, n_results=5)
+
+                if results and results.get('documents') and results['documents'][0]:
+                    for i, doc_text in enumerate(results['documents'][0]):
+                        metadata = results['metadatas'][0][i] if results.get('metadatas') else {}
+                        title = metadata.get('title', '')
+                        related_docs.append({'title': title, 'text': doc_text[:200]})
+                        context += f"제목: {title}\n내용: {doc_text[:300]}\n\n"
+            except Exception as e:
+                print(f"⚠️ ChromaDB 검색 실패, ES 폴백: {e}")
+                search_result = es_service.search_documents(user_message, size=3)
+                if search_result:
+                    for doc in search_result.get('hits', {}).get('hits', []):
+                        src = doc.get('_source', {})
+                        title = src.get('title', '')
+                        content = src.get('content', '')[:200]
+                        related_docs.append({'title': title, 'text': content})
+                        context += f"제목: {title}\n내용: {content}\n\n"
+
+            if context:
+                prompt = f"다음 문서들을 참고하여 '{user_message}'에 대해 최대 300자 이내로 한국어로 답변해줘:\n\n{context}"
             else:
-                response = llm_service.generate_response(user_message, max_length=300, mode=mode)
-            
-            # 문자 수 제한
+                prompt = user_message
+
+            response = llm_service.generate_response(prompt, max_length=300, mode=mode)
             if response and len(response) > max_chars:
                 response = response[:max_chars].rsplit(' ', 1)[0] + "..."
-            
+
             return jsonify({
                 'response': response,
                 'related_docs': related_docs,
