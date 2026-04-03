@@ -222,18 +222,3 @@ class LLMService:
         
         return "죄송합니다. 해당 질문에 대한 답변을 준비 중입니다. 다른 질문을 해주시거나 연락처 페이지를 확인해주세요."
     
-    def get_similarity_score(self, text1, text2):
-        """텍스트 유사도 계산"""
-        if self.embedding_model is None:
-            return 0.0
-        
-        try:
-            embeddings = self.embedding_model.encode([text1, text2])
-            similarity = torch.cosine_similarity(
-                torch.tensor(embeddings[0]).unsqueeze(0),
-                torch.tensor(embeddings[1]).unsqueeze(0)
-            )
-            return float(similarity[0])
-        except Exception as e:
-            print(f"❌ 유사도 계산 실패: {e}")
-            return 0.0
