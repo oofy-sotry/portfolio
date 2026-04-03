@@ -13,6 +13,8 @@ services:
       - KEYCLOAK_REALM=portfolio
       - KEYCLOAK_CLIENT_ID=portfolio-web
       - KEYCLOAK_CLIENT_SECRET=${KEYCLOAK_CLIENT_SECRET:-n11PXNqr3sqESefIjNg06LxUyTeIdVWk}
+      - CHROMADB_HOST=chromadb
+      - CHROMADB_PORT=8000
     depends_on:
       - db
     volumes:
