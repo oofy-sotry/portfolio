@@ -18,6 +18,9 @@
 
 ### 개발
 
+- **[REFACTORING_PLAN.md](./REFACTORING_PLAN.md)**
+  - 리팩토링 단계별 계획 및 진행 상황 체크리스트
+
 - **[USER_FEATURES_ROADMAP.md](./USER_FEATURES_ROADMAP.md)**
   - 사용자별 프로필 시스템 구현 계획
   - 사용자별 자기소개 페이지 구현 계획
