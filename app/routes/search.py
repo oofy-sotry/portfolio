@@ -153,32 +153,40 @@ def ai_search():
 
 @search_bp.route('/semantic')
 def semantic_search():
-    """의미 기반 게시글 검색"""
+    """의미 기반 게시글 검색 — ChromaDB 벡터 유사도"""
     query = request.args.get('q', '')
 
     if not query:
         return jsonify({'error': '검색어를 입력해주세요.'})
 
-    es = _get_es()
-    llm = _get_llm()
+    try:
+        from app.services.vector_store import VectorStore
+        vs = VectorStore()
+        results = vs.search(query, n_results=10)
 
-    # 1. 쿼리 임베딩 생성
-    query_embedding = llm.get_embeddings([query])
+        docs = []
+        if results and results.get('ids') and results['ids'][0]:
+            for i, doc_id in enumerate(results['ids'][0]):
+                metadata = results['metadatas'][0][i] if results.get('metadatas') else {}
+                distance = results['distances'][0][i] if results.get('distances') else 0
+                docs.append({
+                    '_id': doc_id,
+                    '_source': metadata,
+                    '_score': round(1 - distance, 4),
+                    '_document': results['documents'][0][i] if results.get('documents') else ''
+                })
 
-    if query_embedding is None:
-        # 임베딩 실패 시 일반 검색으로 폴백
-        search_result = es.search_documents(query, size=10)
+        return jsonify({
+            'query': query,
+            'results': docs,
+            'type': 'semantic'
+        })
+
+    except Exception as e:
+        print(f"❌ 시맨틱 검색 실패, ES 폴백: {e}")
+        search_result = _get_es().search_documents(query, size=10)
         return jsonify({
             'query': query,
             'results': search_result.get('hits', {}).get('hits', []) if search_result else [],
             'type': 'fallback'
         })
-
-    # 2. 의미 기반 검색 (향후 벡터 DB 연동 예정, 현재는 ES more_like_this)
-    search_result = es.search_documents(query, size=10)
-
-    return jsonify({
-        'query': query,
-        'results': search_result.get('hits', {}).get('hits', []) if search_result else [],
-        'type': 'semantic'
-    })
