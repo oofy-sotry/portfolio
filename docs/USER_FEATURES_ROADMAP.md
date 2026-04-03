@@ -53,7 +53,7 @@
    ```
 
 3. **프로필 관리 로직 변경**
-   - `Profile.get_active_profile()` → `Profile.get_user_profile(user_id)`
+   - `Profile.get_user_profile(user_id)` 사용 (구현 완료)
    - 현재 로그인한 사용자의 프로필만 반환
    - 프로필이 없으면 자동 생성
 
@@ -76,7 +76,7 @@
 
 - [ ] **2단계**: 모델 메서드 수정
   - `Profile.get_user_profile(user_id)` 메서드 추가
-  - `Profile.get_active_profile()` 메서드 제거 또는 deprecated 처리
+  - `Profile.get_active_profile()` 제거 완료
   - 프로필 자동 생성 로직 추가
 
 - [ ] **3단계**: 라우트 수정
@@ -108,8 +108,8 @@
            if current_user.is_authenticated:
                profile = Profile.get_user_profile(current_user.id)
            else:
-               # 기본 프로필 또는 404
-               profile = Profile.get_default_profile()
+               # 비로그인 시 404
+               abort(404)
        
        return render_template('main/about.html', profile=profile, user=user if username else current_user)
    ```
