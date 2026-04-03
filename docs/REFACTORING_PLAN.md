@@ -48,66 +48,89 @@
 
 ---
 
-## Phase 3: 검색 시스템 고도화
+## Phase 3: ES 검색 안정화
 
-> ES 검색이 실제로 동작하도록 완성
+> 게시판 키워드 검색이 안정적으로 동작하도록
 
 ### 3-1. Elasticsearch 서비스 점검
-- [ ] `elasticsearch_service.py`의 인덱스 매핑 검증
+- [ ] `elasticsearch_service.py` 인덱스 매핑 검증
 - [ ] 게시글 작성/수정/삭제 시 ES 인덱스 자동 동기화 확인
-- [ ] `get_suggestions()` — completion suggester 매핑 추가 필요
-- [ ] `get_popular_searches()` — 현재 하드코딩된 샘플 데이터 → 실제 검색 로그 기반으로 전환
+- [ ] `get_popular_searches()` — 하드코딩 샘플 → 실제 데이터 기반으로 전환
 
-### 3-2. 검색 API 엔드포인트 정리
-- [ ] `/api/search/suggestions` — 프론트엔드 자동완성 연결
-- [ ] `/api/search/related` — 게시글 상세 페이지에서 관련 글 표시
-- [ ] `/api/search/popular` — 검색 페이지에서 인기 검색어 표시
-- [ ] `/search/ai`, `/search/semantic` — 사용 여부 결정 후 구현 또는 삭제
+### 3-2. 검색 API 연결
+- [ ] `/search/api/suggestions` — 검색어 자동완성 프론트엔드 연결
+- [ ] `/search/api/related` — 게시글 상세 페이지에서 관련 글 표시
+- [ ] `/search/api/popular` — 검색 페이지 인기 검색어
+
+### 3-3. search.py 모듈 레벨 인스턴스 제거
+- [x] `LLMService()` 모듈 레벨 인스턴스 → 요청 시 lazy 로딩으로 변경
+- [x] `ElasticsearchService()` 모듈 레벨 인스턴스 → 헬퍼 함수로 변경
 
 ---
 
-## Phase 3.5: 로컬 모델 교체
+## Phase 3.5: 한글 임베딩 모델 교체
 
 > 현재 영어 전용 모델 → 한글 지원 모델로 교체
 
 ### 3.5-1. 현재 모델 문제점
-- `distilgpt2` (생성): 영어 전용 82M 모델, 한글 이해 불가
-- `facebook/bart-large-cnn` (요약): 영어 뉴스 전용, 한글 불가, 406M으로 무거움
+- `distilgpt2` (생성): 영어 전용 82M, 한글 이해 불가
+- `facebook/bart-large-cnn` (요약): 영어 뉴스 전용, 한글 불가
 - `all-MiniLM-L6-v2` (임베딩): 영어 중심, 한글 유사도 부정확
 
 ### 3.5-2. 임베딩 모델 교체
-- [ ] `all-MiniLM-L6-v2` → 한글 지원 임베딩 모델로 변경 (예: `jhgan/ko-sroberta-multitask`)
+- [ ] `all-MiniLM-L6-v2` → 한글 임베딩 모델 (예: `jhgan/ko-sroberta-multitask`)
 - [ ] `llm_service.py` 모델 경로 업데이트
-- [ ] `download_models.py` 스크립트 업데이트
-- [ ] ES 검색 유사도 테스트
-
-### 3.5-3. 생성/요약 모델 정리
-- [ ] `distilgpt2`, `bart-large-cnn` 제거 (Phase 4에서 API LLM이 대체)
-- [ ] `llm_service.py`에서 생성/요약은 API 호출로 전환할 준비
+- [ ] 생성/요약 모델(`distilgpt2`, `bart-large-cnn`) 제거 (Phase 4에서 API LLM이 대체)
 - [ ] 모델 미로드 시 fallback 응답 개선
 
 ---
 
-## Phase 4: LLM 서비스 확장
+## Phase 4: RAG 파이프라인 구축
 
-> api_llm_service.py에 외부 API 연동 (생성/요약을 API LLM으로 대체)
+> 현재는 "ES 키워드 검색 + LLM 프롬프트 붙여넣기" 수준.
+> 진짜 RAG(Retrieval-Augmented Generation)를 구현한다.
 
-### 4-1. API LLM 서비스 구현
+### 4-1. 문서 임베딩 & 벡터 저장
+- [ ] 게시글/FAQ를 임베딩 벡터로 변환하는 파이프라인
+- [ ] ES에 `dense_vector` 필드 추가 또는 벡터 DB 도입
+- [ ] 게시글 작성/수정/삭제 시 임베딩 자동 동기화
+
+### 4-2. 게시판 시맨틱 검색 (`/search/semantic`)
+- [ ] 검색 쿼리를 임베딩으로 변환
+- [ ] 벡터 유사도 기반 관련 게시글 검색 (cosine similarity)
+- [ ] ES 키워드 검색 + 벡터 검색 결합 (hybrid search)
+
+### 4-3. 게시판 AI 검색 (`/search/ai`)
+- [ ] RAG: 벡터 검색으로 관련 문서 검색 → LLM이 요약/답변 생성
+- [ ] 기존 키워드 기반 컨텍스트 → 벡터 기반 컨텍스트로 전환
+
+### 4-4. 챗봇 RAG 적용
+- [ ] FAQ 모드: FAQ 임베딩 매칭 → 정확한 FAQ 직접 응답
+- [ ] 문서 기반 모드: 벡터 검색으로 관련 문서 → LLM 컨텍스트 → 답변 생성
+- [ ] 일반 답변 (concise, 100자) / 심화 답변 (detailed, 300자) 유지
+
+---
+
+## Phase 5: API LLM 연동
+
+> 로컬 생성/요약 모델을 외부 API로 대체
+
+### 5-1. API LLM 서비스 구현
 - [ ] `api_llm_service.py`에 Claude API 연동
 - [ ] GPT API 연동
 - [ ] Gemini API 연동
-- [ ] LLM 서비스 선택 로직 (환경변수 또는 설정으로 전환)
+- [ ] LLM 서비스 선택 로직 (환경변수로 전환)
 
-### 4-2. 챗봇 개인화
+### 5-2. 챗봇 개인화
 - [ ] 챗봇 라우트에 `@login_required` 추가
-- [ ] 현재 사용자의 프로필 정보를 LLM 컨텍스트에 포함
+- [ ] 현재 사용자 프로필 정보를 LLM 컨텍스트에 포함
 - [ ] 프로필 기반 FAQ 응답 생성
 
 ---
 
-## Phase 5: UI/UX 개선
+## Phase 6: UI/UX 개선
 
-### 5-1. 프론트엔드 정리
+### 6-1. 프론트엔드 정리
 - [ ] 검색 결과 UI 개선
 - [ ] 챗봇 UI 개선
 - [ ] 반응형 디자인 점검
