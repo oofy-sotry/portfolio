@@ -60,19 +60,19 @@ class LLMService:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
             print("✅ 생성 모델 로딩 완료")
             
-            # 3. 요약 모델 로딩
-            print("🔄 로컬 요약 모델 로딩 중...")
+            # 3. 한글 요약 모델 로딩 (KoBART)
+            SUMMARIZATION_MODEL_NAME = 'digit82/kobart-summarization'
+            print(f"🔄 요약 모델 로딩 중... ({SUMMARIZATION_MODEL_NAME})")
             summarization_path = os.path.join(models_dir, "summarization_model")
             if os.path.exists(summarization_path):
                 self.summarization_tokenizer = AutoTokenizer.from_pretrained(summarization_path)
                 self.summarization_model = AutoModelForSeq2SeqLM.from_pretrained(summarization_path)
-                self.summarization_model.to(self.device)
-                print("✅ 로컬 요약 모델 로딩 완료")
             else:
-                print("⚠️ 로컬 요약 모델을 찾을 수 없습니다. 기본 모델 사용...")
-                self.summarization_tokenizer = AutoTokenizer.from_pretrained('facebook/bart-large-cnn')
-                self.summarization_model = AutoModelForSeq2SeqLM.from_pretrained('facebook/bart-large-cnn')
-                self.summarization_model.to(self.device)
+                print("⚠️ 로컬 모델 없음. HuggingFace에서 다운로드...")
+                self.summarization_tokenizer = AutoTokenizer.from_pretrained(SUMMARIZATION_MODEL_NAME)
+                self.summarization_model = AutoModelForSeq2SeqLM.from_pretrained(SUMMARIZATION_MODEL_NAME)
+            self.summarization_model.to(self.device)
+            print("✅ 요약 모델 로딩 완료")
             
             print("🎉 모든 로컬 모델 로딩 완료!")
             
