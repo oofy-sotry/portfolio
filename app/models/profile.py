@@ -115,12 +115,16 @@ class Profile(db.Model):
         }
     
     @staticmethod
-    def get_active_profile():
-        """활성 프로필 반환 (단일 프로필 시스템)"""
-        profile = Profile.query.filter_by(is_active=True).first()
+    def get_user_profile(user_id):
+        """사용자별 프로필 반환 (없으면 자동 생성)"""
+        profile = Profile.query.filter_by(user_id=user_id).first()
         if not profile:
-            # 프로필이 없으면 기본 프로필 생성
-            profile = Profile()
+            from app.models.user import User
+            user = User.query.get(user_id)
+            profile = Profile(
+                user_id=user_id,
+                name=user.username if user else "개발자 이름"
+            )
             db.session.add(profile)
             db.session.commit()
         return profile
