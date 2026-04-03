@@ -32,4 +32,4 @@ ENV PYTHONPATH=/app
 EXPOSE 5000
 
 # 데이터베이스 초기화 및 애플리케이션 실행
-CMD ["sh", "-c", "sleep 10 && python init_db.py && python scripts/download_models.py && gunicorn --bind 0.0.0.0:5000 --workers 1 --timeout 120 run:app"]
+CMD ["sh", "-c", "sleep 10 && python init_db.py && gunicorn --bind 0.0.0.0:5000 --workers 1 --timeout 120 run:app"]
