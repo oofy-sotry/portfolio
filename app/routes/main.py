@@ -1,8 +1,7 @@
-from flask import Blueprint, render_template, request, jsonify
-from flask_login import login_required, current_user
-from app.models import Post, Category
+from flask import Blueprint, render_template
+from flask_login import login_required
+from app.models import Post
 from app.models.profile import Profile
-from app import db
 
 main_bp = Blueprint('main', __name__)
 
@@ -39,49 +38,4 @@ def contact():
     """연락처 페이지"""
     return render_template('main/contact.html')
 
-@main_bp.route('/search')
-def search():
-    """검색 페이지"""
-    query = request.args.get('q', '')
-    category_id = request.args.get('category', type=int)
-    sort_by = request.args.get('sort', 'latest')
-    
-    # 검색 쿼리 구성
-    search_query = Post.query.filter_by(is_published=True)
-    
-    if query:
-        search_query = search_query.filter(
-            db.or_(
-                Post.title.contains(query),
-                Post.content.contains(query),
-                Post.tags.contains(query)
-            )
-        )
-    
-    if category_id:
-        search_query = search_query.filter(Post.category_id == category_id)
-    
-    # 정렬
-    if sort_by == 'popular':
-        search_query = search_query.order_by(Post.view_count.desc())
-    elif sort_by == 'likes':
-        # 좋아요 수로 정렬 (복잡한 쿼리 필요)
-        search_query = search_query.order_by(Post.created_at.desc())
-    else:  # latest
-        search_query = search_query.order_by(Post.created_at.desc())
-    
-    posts = search_query.paginate(
-        page=request.args.get('page', 1, type=int),
-        per_page=10,
-        error_out=False
-    )
-    
-    categories = Category.query.filter_by(is_active=True).all()
-    
-    return render_template('main/search.html',
-                         posts=posts,
-                         categories=categories,
-                         query=query,
-                         selected_category=category_id,
-                         sort_by=sort_by)
 

@@ -5,8 +5,7 @@
 from flask import Blueprint, render_template, request, jsonify
 from app.services.elasticsearch_service import ElasticsearchService
 from app.services.llm_service import LLMService
-from app.models import Post, Category
-from app import db
+from app.models import Category
 
 search_bp = Blueprint('search', __name__)
 
