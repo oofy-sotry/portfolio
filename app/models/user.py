@@ -18,6 +18,7 @@ class User(UserMixin, db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 관계 설정
+    profile = db.relationship('Profile', backref='user', uselist=False)
     posts = db.relationship('Post', backref='author', lazy='dynamic')
     comments = db.relationship('Comment', backref='author', lazy='dynamic')
     likes = db.relationship('Like', backref='user', lazy='dynamic')
