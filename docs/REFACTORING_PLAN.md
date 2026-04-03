@@ -52,17 +52,18 @@
 
 > 게시판 키워드 검색이 안정적으로 동작하도록
 
-### 3-1. Elasticsearch 서비스 점검
-- [ ] `elasticsearch_service.py` 인덱스 매핑 검증
-- [ ] 게시글 작성/수정/삭제 시 ES 인덱스 자동 동기화 확인
-- [ ] `get_popular_searches()` — 하드코딩 샘플 → 실제 데이터 기반으로 전환
+### 3-1. Elasticsearch 서비스 점검 ✅ (2026-04-03)
+- [x] `get_suggestions()` — completion suggester → match_phrase_prefix로 변경
+- [x] `get_popular_searches()` — 하드코딩 → ES aggregation 기반
+- [x] 게시글/FAQ 작성/수정/삭제 시 ES 인덱스 자동 동기화 확인 (이미 동작)
 
-### 3-2. 검색 API 연결
-- [ ] `/search/api/suggestions` — 검색어 자동완성 프론트엔드 연결
-- [ ] `/search/api/related` — 게시글 상세 페이지에서 관련 글 표시
-- [ ] `/search/api/popular` — 검색 페이지 인기 검색어
+### 3-2. 검색 API 연결 ✅ (2026-04-03)
+- [x] `/search/api/suggestions` — 검색 페이지 자동완성 (300ms debounce)
+- [x] `/search/api/related` — 게시글 상세 페이지 관련 글 사이드바
+- [x] `/search/api/popular` — 검색 페이지 인기 검색어 (ES tags aggregation)
+- [x] 검색 결과 클릭 시 게시글 상세로 이동, FAQ 배지 표시
 
-### 3-3. search.py 모듈 레벨 인스턴스 제거
+### 3-3. search.py 모듈 레벨 인스턴스 제거 ✅ (2026-04-03)
 - [x] `LLMService()` 모듈 레벨 인스턴스 → 요청 시 lazy 로딩으로 변경
 - [x] `ElasticsearchService()` 모듈 레벨 인스턴스 → 헬퍼 함수로 변경
 
