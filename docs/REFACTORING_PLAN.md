@@ -94,24 +94,24 @@
 > 현재는 "ES 키워드 검색 + LLM 프롬프트 붙여넣기" 수준.
 > 진짜 RAG(Retrieval-Augmented Generation)를 구현한다.
 
-### 4-1. 문서 임베딩 & 벡터 저장
-- [ ] 게시글/FAQ를 임베딩 벡터로 변환하는 파이프라인
-- [ ] ES에 `dense_vector` 필드 추가 또는 벡터 DB 도입
-- [ ] 게시글 작성/수정/삭제 시 임베딩 자동 동기화
+### 4-1. 문서 임베딩 & 벡터 저장 ✅ (2026-04-03)
+- [x] ChromaDB Docker 서비스 추가 (docker-compose.yml)
+- [x] VectorStore 서비스 클래스 생성 (app/services/vector_store.py)
+- [x] 게시글 작성/수정/삭제 시 ChromaDB 자동 동기화 (indexing_utils.py)
+- [x] FAQ 생성/수정/삭제 시 ChromaDB 자동 동기화
 
-### 4-2. 게시판 시맨틱 검색 (`/search/semantic`)
-- [ ] 검색 쿼리를 임베딩으로 변환
-- [ ] 벡터 유사도 기반 관련 게시글 검색 (cosine similarity)
-- [ ] ES 키워드 검색 + 벡터 검색 결합 (hybrid search)
+### 4-2. 게시판 시맨틱 검색 ✅ (2026-04-03)
+- [x] `/search/semantic` — ChromaDB cosine similarity 기반 벡터 검색
+- [x] ChromaDB 실패 시 ES 키워드 검색 폴백
 
-### 4-3. 게시판 AI 검색 (`/search/ai`)
-- [ ] RAG: 벡터 검색으로 관련 문서 검색 → LLM이 요약/답변 생성
-- [ ] 기존 키워드 기반 컨텍스트 → 벡터 기반 컨텍스트로 전환
+### 4-3. 게시판 AI 검색 (RAG) ✅ (2026-04-03)
+- [x] `/search/ai` — ChromaDB 벡터 검색(Retrieval) → LLM 답변 생성(Generation)
+- [x] ChromaDB 실패 시 ES 폴백
 
-### 4-4. 챗봇 RAG 적용
-- [ ] FAQ 모드: FAQ 임베딩 매칭 → 정확한 FAQ 직접 응답
-- [ ] 문서 기반 모드: 벡터 검색으로 관련 문서 → LLM 컨텍스트 → 답변 생성
-- [ ] 일반 답변 (concise, 100자) / 심화 답변 (detailed, 300자) 유지
+### 4-4. 챗봇 RAG 적용 ✅ (2026-04-03)
+- [x] search 모드: ChromaDB 벡터 검색 → LLM 컨텍스트 → 답변 생성
+- [x] faq 모드: ES 기반 FAQ 매칭 유지 (정확한 키워드 매칭에 적합)
+- [x] 일반 답변 (concise, 100자) / 심화 답변 (detailed, 300자) 유지
 
 ---
 
