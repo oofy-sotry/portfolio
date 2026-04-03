@@ -104,6 +104,14 @@ services:
     restart: unless-stopped
     command: ["start"]
 
+  chromadb:
+    image: chromadb/chroma:0.4.22
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    restart: unless-stopped
+
   nginx:
     image: nginx:alpine
     ports:
@@ -121,5 +129,6 @@ services:
 volumes:
   db_data:
   es_data:
+  chroma_data:
   huggingface_cache:
 
