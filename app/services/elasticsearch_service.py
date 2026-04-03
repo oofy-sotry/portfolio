@@ -201,13 +201,29 @@ class ElasticsearchService:
             return []
     
     def get_popular_searches(self, size=10):
-        """인기 검색어"""
-        # 실제 구현에서는 검색 로그를 분석하여 인기 검색어를 추출
-        # 여기서는 샘플 데이터 반환
-        return [
-            "Python", "Flask", "Docker", "MySQL", "JavaScript",
-            "웹 개발", "포트폴리오", "프로젝트", "Git", "API"
-        ]
+        """인기 검색어 — ES 인덱스에서 자주 등장하는 태그/카테고리 추출"""
+        agg_body = {
+            "size": 0,
+            "aggs": {
+                "popular_tags": {
+                    "terms": {
+                        "field": "tags",
+                        "size": size
+                    }
+                }
+            }
+        }
+
+        try:
+            response = self.es.search(index=self.index_name, body=agg_body)
+            buckets = response.get('aggregations', {}).get('popular_tags', {}).get('buckets', [])
+            if buckets:
+                return [bucket['key'] for bucket in buckets]
+        except Exception as e:
+            print(f"⚠️ 인기 검색어 조회 실패: {e}")
+
+        # ES 데이터가 없으면 기본값
+        return ["Python", "Flask", "Docker", "MySQL", "JavaScript"]
     
     def delete_document(self, doc_id):
         """문서 삭제"""
