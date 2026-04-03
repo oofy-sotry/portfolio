@@ -147,22 +147,24 @@ class ElasticsearchService:
             return None
     
     def get_suggestions(self, query, size=5):
-        """검색어 자동완성"""
-        suggest_body = {
-            "suggest": {
-                "title_suggest": {
-                    "prefix": query,
-                    "completion": {
-                        "field": "title.suggest",
-                        "size": size
+        """검색어 자동완성 — prefix 매칭으로 제목 검색"""
+        search_body = {
+            "query": {
+                "match_phrase_prefix": {
+                    "title": {
+                        "query": query,
+                        "max_expansions": 10
                     }
                 }
-            }
+            },
+            "_source": ["title"],
+            "size": size
         }
-        
+
         try:
-            response = self.es.search(index=self.index_name, body=suggest_body)
-            return response.get('suggest', {}).get('title_suggest', [])
+            response = self.es.search(index=self.index_name, body=search_body)
+            hits = response.get('hits', {}).get('hits', [])
+            return [hit['_source']['title'] for hit in hits]
         except Exception as e:
             print(f"❌ 자동완성 실패: {e}")
             return []
