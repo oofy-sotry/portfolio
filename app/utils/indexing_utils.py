@@ -129,15 +129,7 @@ def delete_faq_from_es(faq_id):
 
 
 def update_post_in_es(post):
-    """
-    게시글을 Elasticsearch에서 업데이트
-    
-    Args:
-        post: Post 모델 인스턴스
-    
-    Returns:
-        bool: 업데이트 성공 여부
-    """
+    """게시글을 Elasticsearch와 ChromaDB에서 업데이트"""
     try:
         es = ElasticsearchService()
         doc = {
@@ -152,8 +144,23 @@ def update_post_in_es(post):
             "like_count": post.get_like_count(),
             "post_id": post.id,
         }
-        return es.update_document(f"post-{post.id}", doc)
+        es.update_document(f"post-{post.id}", doc)
     except Exception as e:
-        print(f"❌ 게시글 Elasticsearch 업데이트 실패: {e}")
-        return False
+        print(f"❌ 게시글 ES 업데이트 실패: {e}")
+
+    # ChromaDB 벡터 업데이트 (upsert)
+    try:
+        vs = VectorStore()
+        text = f"{post.title}\n{post.content}"
+        metadata = {
+            "doc_type": "post",
+            "post_id": post.id,
+            "title": post.title,
+            "category": post.category.name if post.category else "",
+        }
+        vs.add_document(f"post-{post.id}", text, metadata)
+    except Exception as e:
+        print(f"❌ 게시글 ChromaDB 업데이트 실패: {e}")
+
+    return True
 
