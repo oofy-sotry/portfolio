@@ -3,7 +3,9 @@
 {% block title %}{{ post.title }} - 게시판{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container mt-4" id="post-detail"
+     data-post-id="{{ post.id }}"
+     data-related-url="{{ url_for('search.related_documents') }}">
     <div class="row">
         <div class="col-md-8">
             <!-- 게시글 상세 -->
@@ -146,111 +148,8 @@
     </div>
 </div>
 
-<script>
-// 좋아요 토글
-function toggleLike(postId) {
-    fetch(`/board/${postId}/like`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            alert(data.error);
-        } else {
-            document.getElementById('like-count').textContent = data.like_count;
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-}
+{% endblock %}
 
-// 댓글 작성
-document.getElementById('comment-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    const content = formData.get('content');
-    
-    if (!content.trim()) {
-        alert('댓글 내용을 입력해주세요.');
-        return;
-    }
-    
-    fetch(`/board/{{ post.id }}/comment`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            content: content
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            alert(data.error);
-        } else {
-            location.reload();
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-});
-
-// 게시글 삭제
-function deletePost(postId) {
-    if (confirm('정말로 이 게시글을 삭제하시겠습니까?')) {
-        fetch(`/board/${postId}/delete`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                alert(data.error);
-            } else {
-                window.location.href = '/board/';
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-    }
-}
-
-// 댓글 삭제
-function deleteComment(commentId) {
-    if (confirm('정말로 이 댓글을 삭제하시겠습니까?')) {
-        alert('댓글 삭제 기능은 구현 중입니다.');
-    }
-}
-
-// 관련 글 로드
-fetch(`{{ url_for('search.related_documents') }}?id=post-{{ post.id }}`)
-    .then(r => r.json())
-    .then(docs => {
-        const container = document.getElementById('relatedDocs');
-        if (docs.length === 0) {
-            container.innerHTML = '<p class="text-muted mb-0">관련 글이 없습니다.</p>';
-            return;
-        }
-        container.innerHTML = docs.map(doc => {
-            const src = doc._source || {};
-            const postId = src.post_id;
-            const title = src.title || '제목 없음';
-            const link = postId ? `/board/${postId}` : '#';
-            return `<a href="${link}" class="d-block text-decoration-none mb-2">${title}</a>`;
-        }).join('');
-    })
-    .catch(() => {
-        document.getElementById('relatedDocs').innerHTML = '<p class="text-muted mb-0">관련 글을 불러올 수 없습니다.</p>';
-    });
-</script>
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/board-detail.js') }}"></script>
 {% endblock %}
