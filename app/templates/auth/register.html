@@ -91,54 +91,8 @@
     </div>
 </div>
 
-<script>
-document.getElementById('register-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    const data = {
-        username: formData.get('username'),
-        email: formData.get('email'),
-        password: formData.get('password'),
-        confirm_password: formData.get('confirm_password')
-    };
-    
-    // 유효성 검사
-    if (data.password !== data.confirm_password) {
-        alert('비밀번호가 일치하지 않습니다.');
-        return;
-    }
-    
-    if (data.password.length < 8) {
-        alert('비밀번호는 8자 이상이어야 합니다.');
-        return;
-    }
-    
-    if (!data.username.match(/^[a-zA-Z0-9_]{3,20}$/)) {
-        alert('사용자명은 3-20자의 영문, 숫자, 언더스코어만 사용 가능합니다.');
-        return;
-    }
-    
-    fetch('/auth/register', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            alert(data.error);
-        } else {
-            alert(data.message);
-            window.location.href = data.redirect;
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('회원가입 중 오류가 발생했습니다.');
-    });
-});
-</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
 {% endblock %}
