@@ -23,19 +23,19 @@ Flask를 사용한 풀스택 웹 애플리케이션으로, 개인 포트폴리�
 ## 프로젝트 구조
 
 ```
-portfolio_website/
+portfolio/
 ├── app/
-│   ├── models/          # 데이터베이스 모델
-│   ├── routes/           # 라우트 핸들러
+│   ├── models/           # 데이터베이스 모델 (User, Post, Profile, Category, FAQ)
+│   ├── routes/           # 라우트 핸들러 (auth, main, board, search, chatbot, profile, faq_admin)
+│   ├── services/         # 서비스 (Elasticsearch, LLM)
 │   ├── templates/        # HTML 템플릿
-│   └── static/          # CSS, JS, 이미지
-├── config/              # 설정 파일
-├── docs/                # 문서
-├── scripts/             # 유틸리티 스크립트
-├── docker-compose.yml   # Docker Compose 설정
-├── Dockerfile          # Docker 이미지 설정
-├── requirements.txt    # Python 의존성
-└── run.py             # 애플리케이션 실행
+│   └── static/           # CSS, JS
+├── docs/                 # 문서
+├── scripts/              # 유틸리티 스크립트
+├── docker-compose.yml    # Docker Compose 설정
+├── Dockerfile            # Docker 이미지 설정
+├── requirements.txt      # Python 의존성
+└── run.py                # 애플리케이션 실행
 ```
 
 ## 설치 및 실행
@@ -112,7 +112,7 @@ GRANT ALL PRIVILEGES ON keycloak.* TO 'keycloak'@'%';
 FLUSH PRIVILEGES;
 ```
 
-**참고**: 이 프로젝트는 MariaDB에서 MySQL 8.0으로 마이그레이션되었습니다. 자세한 내용은 [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)를 참고하세요.
+**참고**: 이 프로젝트는 MySQL 8.0을 사용합니다.
 
 ### 데이터베이스 마이그레이션
 
@@ -257,6 +257,7 @@ docker compose logs -f
 - **[시작 가이드](docs/START_SERVICE_GUIDE.md)** - 서비스 시작 방법
 - **[문제 해결 가이드](docs/TROUBLESHOOTING.md)** - 일반적인 문제 해결
 - **[사용자 기능 로드맵](docs/USER_FEATURES_ROADMAP.md)** - 개발 로드맵
+- **[리팩토링 계획](docs/REFACTORING_PLAN.md)** - 리팩토링 단계별 체크리스트
 
 ## 개발 가이드
 
@@ -291,8 +292,6 @@ flask db downgrade
 문제가 발생하면 다음 문서를 참고하세요:
 
 - [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) - 일반적인 문제 해결
-- [KEYCLOAK_MARIADB_FIX.md](docs/KEYCLOAK_MARIADB_FIX.md) - Keycloak 문제 해결
-- [WEB_ACCESS_TROUBLESHOOTING.md](docs/WEB_ACCESS_TROUBLESHOOTING.md) - 웹 접근 문제 해결
 
 ## 라이선스
 
