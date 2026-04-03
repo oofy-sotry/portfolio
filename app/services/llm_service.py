@@ -44,8 +44,21 @@ class LLMService:
                 print("⚠️ 로컬 모델 없음. HuggingFace에서 다운로드...")
                 self.embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
             
-            # 2. 생성 모델 — Phase 5에서 API LLM으로 대체 예정, 현재는 fallback 사용
-            print("ℹ️ 생성 모델: API LLM 연동 전까지 fallback 응답 사용")
+            # 2. 한글 생성 모델 로딩 (KoGPT2)
+            GENERATION_MODEL_NAME = 'skt/kogpt2-base-v2'
+            print(f"🔄 생성 모델 로딩 중... ({GENERATION_MODEL_NAME})")
+            generation_path = os.path.join(models_dir, "generation_model")
+            if os.path.exists(generation_path):
+                self.tokenizer = AutoTokenizer.from_pretrained(generation_path)
+                self.generation_model = AutoModelForCausalLM.from_pretrained(generation_path)
+            else:
+                print("⚠️ 로컬 모델 없음. HuggingFace에서 다운로드...")
+                self.tokenizer = AutoTokenizer.from_pretrained(GENERATION_MODEL_NAME)
+                self.generation_model = AutoModelForCausalLM.from_pretrained(GENERATION_MODEL_NAME)
+            self.generation_model.to(self.device)
+            if self.tokenizer.pad_token is None:
+                self.tokenizer.pad_token = self.tokenizer.eos_token
+            print("✅ 생성 모델 로딩 완료")
             
             # 3. 요약 모델 로딩
             print("🔄 로컬 요약 모델 로딩 중...")
