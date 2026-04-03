@@ -95,21 +95,20 @@ def index_faq_to_es(faq):
 
 
 def delete_post_from_es(post_id):
-    """
-    게시글을 Elasticsearch에서 삭제
-    
-    Args:
-        post_id: 게시글 ID
-    
-    Returns:
-        bool: 삭제 성공 여부
-    """
+    """게시글을 Elasticsearch와 ChromaDB에서 삭제"""
     try:
         es = ElasticsearchService()
-        return es.delete_document(f"post-{post_id}")
+        es.delete_document(f"post-{post_id}")
     except Exception as e:
-        print(f"❌ 게시글 Elasticsearch 삭제 실패: {e}")
-        return False
+        print(f"❌ 게시글 ES 삭제 실패: {e}")
+
+    try:
+        vs = VectorStore()
+        vs.delete_document(f"post-{post_id}")
+    except Exception as e:
+        print(f"❌ 게시글 ChromaDB 삭제 실패: {e}")
+
+    return True
 
 
 def delete_faq_from_es(faq_id):
