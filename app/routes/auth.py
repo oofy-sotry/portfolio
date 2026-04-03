@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from app.models import User
+from app.models.profile import Profile
 from app import db
 import re
 import os
@@ -193,12 +194,16 @@ def register():
                 flash(error, 'error')
             return render_template('auth/register.html')
         
-        # 사용자 생성
+        # 사용자 + 프로필 생성
         user = User(username=username, email=email)
         user.set_password(password)
-        
+
         try:
             db.session.add(user)
+            db.session.flush()  # user.id 확보
+
+            profile = Profile(user_id=user.id, name=username)
+            db.session.add(profile)
             db.session.commit()
             
             if request.is_json:
