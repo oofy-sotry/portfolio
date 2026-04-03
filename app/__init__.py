@@ -108,26 +108,6 @@ def create_app():
                         """))
                         db.session.commit()
                         print("✅ 마이그레이션 완료: password_hash 컬럼이 NULL 허용으로 변경되었습니다.")
-                # 마이그레이션: profiles 테이블에 user_id 컬럼 추가
-                if 'profiles' in inspector.get_table_names():
-                    profile_columns = [col['name'] for col in inspector.get_columns('profiles')]
-
-                    if 'user_id' not in profile_columns:
-                        print("📝 마이그레이션: profiles.user_id 컬럼 추가 중...")
-                        db.session.execute(text("""
-                            ALTER TABLE profiles
-                            ADD COLUMN user_id INTEGER UNIQUE,
-                            ADD CONSTRAINT fk_profile_user FOREIGN KEY (user_id) REFERENCES users(id)
-                        """))
-                        # 기존 프로필을 첫 번째 admin 유저에 할당
-                        db.session.execute(text("""
-                            UPDATE profiles SET user_id = (
-                                SELECT id FROM users WHERE is_admin = 1 LIMIT 1
-                            ) WHERE user_id IS NULL
-                        """))
-                        db.session.commit()
-                        print("✅ 마이그레이션 완료: profiles.user_id 컬럼 추가 및 기존 데이터 할당")
-
             except OperationalError as migration_error:
                 print(f"ℹ️ 마이그레이션 체크: {migration_error}")
             except Exception as migration_error:
