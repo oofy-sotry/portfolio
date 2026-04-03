@@ -141,19 +141,5 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-document.getElementById('contactForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    // 폼 데이터 수집
-    const formData = new FormData(this);
-    
-    // 실제 구현에서는 서버로 데이터를 전송
-    // 여기서는 시뮬레이션
-    alert('메시지가 전송되었습니다! (실제 구현에서는 서버로 전송됩니다)');
-    
-    // 폼 초기화
-    this.reset();
-});
-</script>
+<script src="{{ url_for('static', filename='js/contact.js') }}"></script>
 {% endblock %}
