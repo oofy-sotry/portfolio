@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template
-from flask_login import login_required
-from app.models import Post
+from flask_login import login_required, current_user
+from app.models import Post, User
 from app.models.profile import Profile
 
 main_bp = Blueprint('main', __name__)
@@ -25,12 +25,16 @@ def index():
 @main_bp.route('/about')
 @login_required
 def about():
-    """자기소개 페이지"""
-    try:
-        profile = Profile.get_active_profile()
-        return render_template('main/about.html', profile=profile)
-    except Exception as e:
-        return f"Error in about page: {str(e)}", 500
+    """내 자기소개 페이지"""
+    profile = Profile.get_user_profile(current_user.id)
+    return render_template('main/about.html', profile=profile, user=current_user)
+
+@main_bp.route('/about/<username>')
+def about_user(username):
+    """특정 사용자 자기소개 페이지 (읽기 전용)"""
+    user = User.query.filter_by(username=username).first_or_404()
+    profile = Profile.get_user_profile(user.id)
+    return render_template('main/about.html', profile=profile, user=user)
 
 @main_bp.route('/contact')
 @login_required
