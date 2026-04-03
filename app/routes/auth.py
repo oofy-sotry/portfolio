@@ -101,16 +101,24 @@ def keycloak_callback():
             user = User(
                 username=userinfo.get('preferred_username'),
                 email=userinfo.get('email'),
-                password_hash=None,  # Keycloak 사용자는 비밀번호 없음
+                password_hash=None,
                 is_keycloak_user=True
             )
             db.session.add(user)
+            db.session.flush()
+
+            profile = Profile(user_id=user.id, name=user.username)
+            db.session.add(profile)
             db.session.commit()
         else:
-            # 기존 사용자가 Keycloak 사용자로 업데이트되지 않은 경우 업데이트
             if not user.is_keycloak_user:
                 user.is_keycloak_user = True
                 user.password_hash = None
+                db.session.commit()
+            # 기존 유저인데 프로필이 없는 경우
+            if not user.profile:
+                profile = Profile(user_id=user.id, name=user.username)
+                db.session.add(profile)
                 db.session.commit()
         
         # 로그인
