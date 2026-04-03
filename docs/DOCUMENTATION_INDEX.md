@@ -18,6 +18,10 @@
 
 ### 개발
 
+- **[MODEL_GUIDE.md](./MODEL_GUIDE.md)**
+  - 로컬 LLM 모델 선택 가이드 (A 경량 / B 고품질)
+  - 필요 사양 및 전환 방법
+
 - **[REFACTORING_PLAN.md](./REFACTORING_PLAN.md)**
   - 리팩토링 단계별 계획 및 진행 상황 체크리스트
 
