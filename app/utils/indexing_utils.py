@@ -55,11 +55,11 @@ def index_post_to_es(post):
 
 def index_faq_to_es(faq):
     """
-    FAQ를 Elasticsearch에 인덱싱
-    
+    FAQ를 Elasticsearch와 ChromaDB에 인덱싱
+
     Args:
         faq: FAQ 모델 인스턴스
-    
+
     Returns:
         bool: 인덱싱 성공 여부
     """
@@ -74,10 +74,24 @@ def index_faq_to_es(faq):
             "created_at": faq.created_at.isoformat() if faq.created_at else None,
             "faq_id": faq.id,
         }
-        return es.index_document(f"faq-{faq.id}", doc)
+        es.index_document(f"faq-{faq.id}", doc)
     except Exception as e:
-        print(f"❌ FAQ Elasticsearch 인덱싱 실패: {e}")
-        return False
+        print(f"❌ FAQ ES 인덱싱 실패: {e}")
+
+    # ChromaDB 벡터 저장
+    try:
+        vs = VectorStore()
+        text = f"{faq.question}\n{faq.answer}"
+        metadata = {
+            "doc_type": "faq",
+            "faq_id": faq.id,
+            "title": faq.question,
+        }
+        vs.add_document(f"faq-{faq.id}", text, metadata)
+    except Exception as e:
+        print(f"❌ FAQ ChromaDB 인덱싱 실패: {e}")
+
+    return True
 
 
 def delete_post_from_es(post_id):
