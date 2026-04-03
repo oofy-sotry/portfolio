@@ -13,7 +13,7 @@ search_bp = Blueprint('search', __name__)
 es_service = ElasticsearchService()
 llm_service = LLMService()
 
-@search_bp.route('/search')
+@search_bp.route('/')
 def advanced_search():
     """고급 검색 페이지"""
     query = request.args.get('q', '')
@@ -74,7 +74,7 @@ def advanced_search():
                          date_to=date_to,
                          sort_by=sort_by)
 
-@search_bp.route('/api/search/suggestions')
+@search_bp.route('/api/suggestions')
 def search_suggestions():
     """검색어 자동완성 API"""
     query = request.args.get('q', '')
@@ -85,7 +85,7 @@ def search_suggestions():
     suggestions = es_service.get_suggestions(query, size=10)
     return jsonify([s['text'] for s in suggestions])
 
-@search_bp.route('/api/search/related')
+@search_bp.route('/api/related')
 def related_documents():
     """관련 문서 추천 API"""
     doc_id = request.args.get('id')
@@ -96,13 +96,13 @@ def related_documents():
     related_docs = es_service.get_related_documents(doc_id, size=5)
     return jsonify(related_docs)
 
-@search_bp.route('/api/search/popular')
+@search_bp.route('/api/popular')
 def popular_searches():
     """인기 검색어 API"""
     popular = es_service.get_popular_searches()
     return jsonify(popular)
 
-@search_bp.route('/search/ai')
+@search_bp.route('/ai')
 def ai_search():
     """AI 기반 검색"""
     query = request.args.get('q', '')
@@ -143,7 +143,7 @@ def ai_search():
         'mode': mode
     })
 
-@search_bp.route('/search/semantic')
+@search_bp.route('/semantic')
 def semantic_search():
     """의미 기반 검색"""
     query = request.args.get('q', '')
