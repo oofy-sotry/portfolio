@@ -17,9 +17,10 @@ Flask를 사용한 풀스택 웹 애플리케이션으로, 개인 포트폴리�
 - **Frontend**: HTML5, CSS3, JavaScript, Bootstrap 5
 - **Database**: MySQL 8.0
 - **Search Engine**: Elasticsearch 8.11.0
+- **Vector DB**: ChromaDB 0.4.22 (RAG 시맨틱 검색)
 - **Authentication**: Keycloak 24.0 (OAuth 2.0 / OpenID Connect)
 - **Deployment**: Docker, Docker Compose, Nginx
-- **AI/ML**: Transformers, Sentence Transformers (챗봇 기능)
+- **AI/ML**: KoGPT2 (생성), KoBART (요약), ko-sroberta (임베딩)
 
 ## 프로젝트 구조
 
