@@ -76,5 +76,15 @@ def create_app():
             print("✅ 데이터베이스 연결 성공")
         except Exception as e:
             print(f"❌ 데이터베이스 연결 실패: {e}")
-    
+
+    # LLM 모델 사전 로딩 (첫 요청 지연 방지)
+    with app.app_context():
+        try:
+            from app.services.llm_service import LLMService
+            app.llm_service = LLMService()
+            print("✅ LLM 모델 사전 로딩 완료")
+        except Exception as e:
+            print(f"⚠️ LLM 모델 사전 로딩 실패 (챗봇 요청 시 재시도): {e}")
+            app.llm_service = None
+
     return app
