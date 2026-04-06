@@ -116,3 +116,47 @@ class APILLMService:
         except Exception as e:
             print(f"ChatGPT API 오류: {e}")
             return None
+
+    def _call_gemini(self, prompt, max_tokens):
+        """Google Gemini API 호출"""
+        if not self.google_api_key:
+            return None
+
+        try:
+            response = requests.post(
+                f'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={self.google_api_key}',
+                headers={
+                    'Content-Type': 'application/json',
+                },
+                json={
+                    'systemInstruction': {
+                        'parts': [{'text': SYSTEM_PROMPT}]
+                    },
+                    'contents': [
+                        {
+                            'parts': [{'text': prompt}]
+                        }
+                    ],
+                    'generationConfig': {
+                        'maxOutputTokens': max_tokens,
+                        'temperature': 0.7,
+                    },
+                },
+                timeout=30,
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                candidates = result.get('candidates', [])
+                if candidates:
+                    parts = candidates[0].get('content', {}).get('parts', [])
+                    if parts:
+                        return parts[0].get('text')
+                return None
+            else:
+                print(f"Gemini API 오류: {response.status_code} - {response.text}")
+                return None
+
+        except Exception as e:
+            print(f"Gemini API 오류: {e}")
+            return None
