@@ -44,7 +44,7 @@ def send_message():
             score = top_hit.get('_score', 0)
             source = top_hit.get('_source', {})
             # doc_type이 faq이고 점수가 임계값 이상이면 FAQ 직접 응답 (LLM 사용 안 함)
-            if source.get('doc_type') == 'faq' and score >= 5.0:
+            if source.get('doc_type') == 'faq' and score >= 0.5:
                 high_score_faq_answer = source.get('content')
     
     # 점수 높은 FAQ가 있으면 바로 응답
@@ -233,7 +233,7 @@ def ai_chat():
                     score = top_hit.get('_score', 0)
                     source = top_hit.get('_source', {})
                     # doc_type이 faq이고 점수가 임계값 이상이면 FAQ 직접 응답 (LLM 사용 안 함)
-                    if source.get('doc_type') == 'faq' and score >= 5.0:
+                    if source.get('doc_type') == 'faq' and score >= 0.5:
                         high_score_faq_answer = source.get('content')
 
             # 점수 높은 FAQ가 있으면 바로 응답
