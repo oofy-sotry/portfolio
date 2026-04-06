@@ -64,6 +64,16 @@ def init_database():
                     db.session.add(faq)
 
             db.session.commit()
+
+            # FAQ를 Elasticsearch에 인덱싱
+            try:
+                from app.utils.indexing_utils import index_faq_to_es
+                for faq in FAQ.query.filter_by(is_active=True).all():
+                    index_faq_to_es(faq)
+                print("✅ FAQ Elasticsearch 인덱싱 완료")
+            except Exception as e:
+                print(f"⚠️ FAQ ES 인덱싱 실패 (나중에 재시도): {e}")
+
             print("✅ 초기 데이터 설정 완료")
 
         except Exception as e:
