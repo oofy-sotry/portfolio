@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const faqWrapper = document.getElementById('faqQuickWrapper');
     const searchModeRadios = document.querySelectorAll('input[name="searchMode"]');
 
+    const providerSelect = document.getElementById('providerSelect');
+
     let currentMode = 'concise';
     let currentSearchMode = 'faq';
 
@@ -45,7 +47,8 @@ document.addEventListener('DOMContentLoaded', function() {
             body: JSON.stringify({
                 message: message,
                 mode: currentMode,
-                search_mode: currentSearchMode
+                search_mode: currentSearchMode,
+                provider: providerSelect ? providerSelect.value : 'local'
             })
         })
         .then(response => response.json())
