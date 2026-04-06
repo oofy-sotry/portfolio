@@ -90,13 +90,14 @@ def send_message():
     
     return jsonify({'response': response})
 
-def _generate_llm_response(prompt, provider, mode, llm_service, api_llm_service):
+def _generate_llm_response(prompt, provider, mode, llm_service, api_llm_service, profile_context=""):
     """provider에 따라 로컬 LLM 또는 API LLM으로 응답 생성"""
+    prompt_with_context = f"{profile_context}\n{prompt}" if profile_context else prompt
     if provider == 'local':
         max_length = 100 if mode == "concise" else 300
-        return llm_service.generate_response(prompt, max_length=max_length, mode=mode)
+        return llm_service.generate_response(prompt_with_context, max_length=max_length, mode=mode)
     else:
-        return api_llm_service.generate_response(prompt, provider=provider, mode=mode)
+        return api_llm_service.generate_response(prompt_with_context, provider=provider, mode=mode)
 
 
 def get_faq_response(message):
@@ -191,6 +192,23 @@ def ai_chat():
     if not user_message:
         return jsonify({'error': '메시지를 입력해주세요.'}), 400
 
+    # 사용자 프로필 컨텍스트 생성
+    from app.models.profile import Profile
+    profile = Profile.get_user_profile(current_user.id)
+    all_skills = []
+    if profile.skills and isinstance(profile.skills, dict):
+        for category_skills in profile.skills.values():
+            if isinstance(category_skills, list):
+                all_skills.extend(category_skills)
+    profile_context = (
+        f"\n[사용자 프로필]\n"
+        f"- 이름: {profile.name}\n"
+        f"- 직책: {profile.title}\n"
+        f"- 소개: {profile.bio or '없음'}\n"
+        f"- 기술 스택: {', '.join(all_skills) if all_skills else '없음'}\n"
+        f"- 경력: {len(profile.experiences) if profile.experiences else 0}개\n"
+    )
+
     llm_service = LLMService()
     api_llm_service = APILLMService()
     es_service = ElasticsearchService()
@@ -252,7 +270,7 @@ def ai_chat():
                     })
                 prompt = user_message
 
-            response = _generate_llm_response(prompt, provider, mode, llm_service, api_llm_service)
+            response = _generate_llm_response(prompt, provider, mode, llm_service, api_llm_service, profile_context)
             if provider == 'local' and response and len(response) > max_chars:
                 response = response[:max_chars].rsplit(' ', 1)[0] + "..."
 
@@ -296,7 +314,7 @@ def ai_chat():
             else:
                 prompt = user_message
 
-            response = _generate_llm_response(prompt, provider, mode, llm_service, api_llm_service)
+            response = _generate_llm_response(prompt, provider, mode, llm_service, api_llm_service, profile_context)
             if provider == 'local' and response and len(response) > max_chars:
                 response = response[:max_chars].rsplit(' ', 1)[0] + "..."
 
@@ -310,7 +328,7 @@ def ai_chat():
 
         elif search_mode == 'ai':
             # AI 모드 - 순수 LLM 응답
-            response = _generate_llm_response(user_message, provider, mode, llm_service, api_llm_service)
+            response = _generate_llm_response(user_message, provider, mode, llm_service, api_llm_service, profile_context)
 
             if provider == 'local' and response and len(response) > max_chars:
                 response = response[:max_chars].rsplit(' ', 1)[0] + "..."
