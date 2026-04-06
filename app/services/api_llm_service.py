@@ -46,3 +46,38 @@ class APILLMService:
 
         max_tokens = 150 if mode == "concise" else 500
         return handler(prompt, max_tokens)
+
+    def _call_claude(self, prompt, max_tokens):
+        """Anthropic Claude API 호출"""
+        if not self.anthropic_api_key:
+            return None
+
+        try:
+            response = requests.post(
+                'https://api.anthropic.com/v1/messages',
+                headers={
+                    'x-api-key': self.anthropic_api_key,
+                    'anthropic-version': '2023-06-01',
+                    'Content-Type': 'application/json',
+                },
+                json={
+                    'model': 'claude-sonnet-4-20250514',
+                    'max_tokens': max_tokens,
+                    'system': SYSTEM_PROMPT,
+                    'messages': [
+                        {'role': 'user', 'content': prompt}
+                    ],
+                },
+                timeout=30,
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                return result['content'][0]['text']
+            else:
+                print(f"Claude API 오류: {response.status_code} - {response.text}")
+                return None
+
+        except Exception as e:
+            print(f"Claude API 오류: {e}")
+            return None
