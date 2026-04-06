@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify
+from flask_login import login_required, current_user
 import requests
 import os
 import json
@@ -174,8 +175,9 @@ def advanced_chat():
     return render_template('chatbot/advanced_chat.html', faq_data=faq_data)
 
 @chatbot_bp.route('/ai-chat', methods=['POST'])
+@login_required
 def ai_chat():
-    """AI 기반 챗봇 응답"""
+    """AI 기반 챗봇 응답 (로그인 필수)"""
     from app.services.llm_service import LLMService
     from app.services.api_llm_service import APILLMService
     from app.services.elasticsearch_service import ElasticsearchService
