@@ -71,13 +71,17 @@ class LLMService:
             SUMMARIZATION_MODEL_NAME = 'digit82/kobart-summarization'
             print(f"🔄 요약 모델 로딩 중... ({SUMMARIZATION_MODEL_NAME})")
             summarization_path = os.path.join(models_dir, "summarization_model")
-            if os.path.exists(summarization_path):
+            if os.path.exists(summarization_path) and os.listdir(summarization_path):
                 self.summarization_tokenizer = AutoTokenizer.from_pretrained(summarization_path)
                 self.summarization_model = AutoModelForSeq2SeqLM.from_pretrained(summarization_path)
             else:
                 print("⚠️ 로컬 모델 없음. HuggingFace에서 다운로드...")
                 self.summarization_tokenizer = AutoTokenizer.from_pretrained(SUMMARIZATION_MODEL_NAME)
                 self.summarization_model = AutoModelForSeq2SeqLM.from_pretrained(SUMMARIZATION_MODEL_NAME)
+                os.makedirs(summarization_path, exist_ok=True)
+                self.summarization_tokenizer.save_pretrained(summarization_path)
+                self.summarization_model.save_pretrained(summarization_path)
+                print(f"💾 요��� 모델 저장 완료: {summarization_path}")
             self.summarization_model.to(self.device)
             print("✅ 요약 모델 로딩 완료")
             
