@@ -51,13 +51,17 @@ class LLMService:
             GENERATION_MODEL_NAME = 'skt/kogpt2-base-v2'
             print(f"🔄 생성 모델 로딩 중... ({GENERATION_MODEL_NAME})")
             generation_path = os.path.join(models_dir, "generation_model")
-            if os.path.exists(generation_path):
+            if os.path.exists(generation_path) and os.listdir(generation_path):
                 self.tokenizer = AutoTokenizer.from_pretrained(generation_path)
                 self.generation_model = AutoModelForCausalLM.from_pretrained(generation_path)
             else:
                 print("⚠️ 로컬 모델 없음. HuggingFace에서 다운로드...")
                 self.tokenizer = AutoTokenizer.from_pretrained(GENERATION_MODEL_NAME)
                 self.generation_model = AutoModelForCausalLM.from_pretrained(GENERATION_MODEL_NAME)
+                os.makedirs(generation_path, exist_ok=True)
+                self.tokenizer.save_pretrained(generation_path)
+                self.generation_model.save_pretrained(generation_path)
+                print(f"💾 생성 모델 저장 완료: {generation_path}")
             self.generation_model.to(self.device)
             if self.tokenizer.pad_token is None:
                 self.tokenizer.pad_token = self.tokenizer.eos_token
