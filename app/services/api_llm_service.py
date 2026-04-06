@@ -81,3 +81,38 @@ class APILLMService:
         except Exception as e:
             print(f"Claude API 오류: {e}")
             return None
+
+    def _call_chatgpt(self, prompt, max_tokens):
+        """OpenAI ChatGPT API 호출"""
+        if not self.openai_api_key:
+            return None
+
+        try:
+            response = requests.post(
+                'https://api.openai.com/v1/chat/completions',
+                headers={
+                    'Authorization': f'Bearer {self.openai_api_key}',
+                    'Content-Type': 'application/json',
+                },
+                json={
+                    'model': 'gpt-4o-mini',
+                    'messages': [
+                        {'role': 'system', 'content': SYSTEM_PROMPT},
+                        {'role': 'user', 'content': prompt},
+                    ],
+                    'max_tokens': max_tokens,
+                    'temperature': 0.7,
+                },
+                timeout=30,
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                return result['choices'][0]['message']['content']
+            else:
+                print(f"ChatGPT API 오류: {response.status_code} - {response.text}")
+                return None
+
+        except Exception as e:
+            print(f"ChatGPT API 오류: {e}")
+            return None
