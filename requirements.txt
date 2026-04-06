@@ -16,4 +16,4 @@ transformers==4.30.2
 sentence-transformers==2.2.2
 huggingface-hub==0.16.4
 numpy<2.0.0
-chromadb-client==0.4.22
+chromadb-client>=0.5.10
