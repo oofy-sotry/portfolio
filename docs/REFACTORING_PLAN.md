@@ -105,11 +105,13 @@
 
 > 로컬 모델(기본 답변)은 유지하고, API LLM(고급 답변)을 추가
 
-### 5-1. API LLM 서비스 구현
-- [ ] `api_llm_service.py`에 Claude API 연동
-- [ ] GPT API 연동
-- [ ] Gemini API 연동
-- [ ] 기본 답변(로컬 KoGPT2) / 고급 답변(API LLM) 선택 로직
+### 5-1. API LLM 서비스 구현 ✅
+- [x] `api_llm_service.py` 공통 인터페이스(dispatch 패턴)로 재설계
+- [x] Claude API 연동 (claude-sonnet-4, Anthropic Messages API)
+- [x] ChatGPT API 연동 (gpt-4o-mini, OpenAI Chat Completions API)
+- [x] Gemini API 연동 (gemini-2.0-flash, Google Generative Language API)
+- [x] 기본 답변(로컬 KoGPT2) / 고급 답변(API LLM) 선택 로직
+- [x] 고급 챗봇 UI에 AI 제공자 선택 드롭다운 추가
 
 ### 5-2. 챗봇 개인화
 - [ ] 챗봇 라우트에 `@login_required` 추가
