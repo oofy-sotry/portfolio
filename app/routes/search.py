@@ -74,17 +74,7 @@ def search_suggestions():
     if not query or len(query) < 2:
         return jsonify([])
 
-    # prefix 매칭으로 제목 검색
-    search_result = _get_es().search_documents(query, size=5)
-
-    suggestions = []
-    if search_result:
-        hits = search_result.get('hits', {}).get('hits', [])
-        for hit in hits:
-            title = hit.get('_source', {}).get('title', '')
-            if title and title not in suggestions:
-                suggestions.append(title)
-
+    suggestions = _get_es().get_suggestions(query, size=5)
     return jsonify(suggestions)
 
 
