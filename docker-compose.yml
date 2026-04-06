@@ -107,7 +107,7 @@ services:
     command: ["start"]
 
   chromadb:
-    image: chromadb/chroma:0.4.22
+    image: chromadb/chroma:0.5.23
     ports:
       - "8000:8000"
     volumes:
