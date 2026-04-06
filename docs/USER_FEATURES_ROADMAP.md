@@ -133,71 +133,58 @@
   - 메뉴에서 자기소개 링크를 사용자별로 변경
   - 다른 사용자의 프로필 링크 생성
 
-### 목표 3: 사용자별 챗봇 응답
+### 목표 3: 사용자별 챗봇 응답 (포트폴리오 어시스턴트)
 
-각 사용자의 프로필 정보를 기반으로 챗봇이 개인화된 응답을 제공하도록 변경합니다.
+챗봇이 로그인한 사용자의 프로필 정보를 **알고는 있지만, 사용자 본인으로 대답하지 않는다.**
+챗봇의 역할은 **포트폴리오 어시스턴트** — 사용자의 프로필을 조회하고 조언하는 제3자.
+
+#### 응답 예시
+
+```
+사용자: "내 기술 스택 뭐야?"
+챗봇: "이정현님의 등록된 기술 스택은 Python, Flask, Docker입니다."
+
+사용자: "내 프로필에서 부족한 점이 뭘까?"
+챗봇: "이정현님의 프로필을 보면, 경력 설명이 아직 비어 있습니다. 추가하시는 걸 추천드려요."
+```
 
 #### 필요한 변경사항
 
-1. **챗봇 컨텍스트 추가**
-   ```python
-   # app/routes/chatbot.py
-   @chatbot_bp.route('/ai-chat', methods=['POST'])
-   @login_required
-   def ai_chat():
-       # 현재 사용자의 프로필 정보 가져오기
-       profile = Profile.get_user_profile(current_user.id)
-       
-       # 프로필 정보를 컨텍스트로 추가
-       context = f"""
-       사용자 정보:
-       - 이름: {profile.name}
-       - 직책: {profile.title}
-       - 소개: {profile.bio}
-       - 기술 스택: {', '.join(profile.get_all_skills())}
-       - 경력: {len(profile.experiences)}개
-       """
-       
-       # LLM 서비스에 컨텍스트 전달
-       prompt = f"{context}\n\n사용자 질문: {user_message}"
-       response = llm_service.generate_response(prompt, mode=mode)
+1. **시스템 프롬프트에 어시스턴트 역할 명시**
+   ```
+   당신은 포트폴리오 사이트의 어시스턴트입니다.
+   현재 사용자의 프로필 정보를 참고하여 도움을 주세요.
+   사용자 본인인 것처럼 대답하지 마세요. 제3자 어시스턴트로서 답변하세요.
    ```
 
-2. **프로필 기반 FAQ 응답**
+2. **프로필 정보를 컨텍스트로 주입**
    ```python
-   def get_personalized_faq_response(message, profile):
-       """프로필 정보를 기반으로 FAQ 응답 생성"""
-       message_lower = message.lower()
-       
-       # 프로필 정보 기반 응답
-       if '자기소개' in message_lower or '소개' in message_lower:
-           return f"안녕하세요! 저는 {profile.name}입니다. {profile.bio}"
-       
-       if '기술' in message_lower or '스택' in message_lower:
-           skills = profile.get_all_skills()
-           return f"제 주요 기술 스택은 {', '.join(skills)}입니다."
-       
-       # 기존 FAQ 로직
-       return get_faq_response(message)
+   profile = Profile.get_user_profile(current_user.id)
+   context = f"""
+   [사용자 프로필]
+   - 이름: {profile.name}
+   - 직책: {profile.title}
+   - 기술 스택: {', '.join(profile.get_all_skills())}
+   """
    ```
 
 #### 구현 단계
 
 - [ ] **1단계**: 챗봇 라우트에 인증 추가
-  - `/chatbot/ai-chat` 엔드포인트에 `@login_required` 데코레이터 추가
+  - `/chatbot/ai-chat`에 `@login_required` 추가
   - 비로그인 사용자 처리
 
-- [ ] **2단계**: 프로필 정보 컨텍스트 추가
-  - 현재 사용자의 프로필 정보를 챗봇 컨텍스트에 포함
-  - LLM 프롬프트에 프로필 정보 추가
+- [ ] **2단계**: 시스템 프롬프트에 어시스턴트 역할 정의
+  - "포트폴리오 어시스턴트" 역할 명시
+  - "사용자 본인으로 답변하지 말 것" 제약 조건 추가
 
-- [ ] **3단계**: 개인화된 FAQ 응답
-  - 프로필 정보를 기반으로 FAQ 응답 생성
-  - 기술 스택, 경력, 프로젝트 정보 활용
+- [ ] **3단계**: 프로필 정보 컨텍스트 주입
+  - 로그인한 사용자의 프로필을 LLM 프롬프트에 포함
+  - 프로필 조회, 조언 질문에 활용
 
-- [ ] **4단계**: 챗봇 UI 개선
-  - 사용자별 챗봇 히스토리 저장 (선택사항)
-  - 프로필 정보 표시
+- [ ] **4단계**: 챗봇 UI 개선 (선택사항)
+  - 사용자별 챗봇 히스토리 저장
+  - 프로필 요약 표시
 
 ## 데이터베이스 마이그레이션 계획
 
