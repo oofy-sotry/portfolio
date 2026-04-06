@@ -31,17 +31,25 @@
                             <label class="btn btn-outline-success btn-sm" for="faqMode">
                                 <i class="fas fa-question-circle"></i> FAQ
                             </label>
-                            
+
                             <input type="radio" class="btn-check" name="searchMode" id="searchMode" value="search">
                             <label class="btn btn-outline-success btn-sm" for="searchMode">
                                 <i class="fas fa-search"></i> 검색
                             </label>
-                            
+
                             <input type="radio" class="btn-check" name="searchMode" id="aiMode" value="ai">
                             <label class="btn btn-outline-success btn-sm" for="aiMode">
                                 <i class="fas fa-brain"></i> AI
                             </label>
                         </div>
+
+                        <!-- AI 제공자 선택 -->
+                        <select class="form-select form-select-sm ms-2" id="providerSelect" style="width: auto;">
+                            <option value="local">로컬 (KoGPT2)</option>
+                            <option value="claude">Claude</option>
+                            <option value="chatgpt">ChatGPT</option>
+                            <option value="gemini">Gemini</option>
+                        </select>
                     </div>
                 </div>
                 
