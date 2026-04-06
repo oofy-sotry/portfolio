@@ -33,7 +33,7 @@ class LLMService:
             EMBEDDING_MODEL_NAME = 'jhgan/ko-sroberta-multitask'
             print(f"🔄 임베딩 모델 로딩 중... ({EMBEDDING_MODEL_NAME})")
             embedding_path = os.path.join(models_dir, "embedding_model")
-            if os.path.exists(embedding_path):
+            if os.path.exists(embedding_path) and os.listdir(embedding_path):
                 try:
                     self.embedding_model = SentenceTransformer(embedding_path)
                     print("✅ 로컬 임베딩 모델 로딩 완료")
@@ -43,6 +43,9 @@ class LLMService:
             else:
                 print("⚠️ 로컬 모델 없음. HuggingFace에서 다운로드...")
                 self.embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+                os.makedirs(embedding_path, exist_ok=True)
+                self.embedding_model.save(embedding_path)
+                print(f"💾 임베딩 모델 저장 완료: {embedding_path}")
             
             # 2. 한글 생성 모델 로딩 (KoGPT2)
             GENERATION_MODEL_NAME = 'skt/kogpt2-base-v2'
