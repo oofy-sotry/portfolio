@@ -47,9 +47,7 @@ docker-compose.override.yml
 # app/static/uploads/
 
 # 모델 파일 (큰 파일)
-models/*.pth
-models/*.bin
-models/*.safetensors
+models/
 *.h5
 *.ckpt
 
