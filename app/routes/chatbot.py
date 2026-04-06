@@ -89,6 +89,15 @@ def send_message():
     
     return jsonify({'response': response})
 
+def _generate_llm_response(prompt, provider, mode, llm_service, api_llm_service):
+    """provider에 따라 로컬 LLM 또는 API LLM으로 응답 생성"""
+    if provider == 'local':
+        max_length = 100 if mode == "concise" else 300
+        return llm_service.generate_response(prompt, max_length=max_length, mode=mode)
+    else:
+        return api_llm_service.generate_response(prompt, provider=provider, mode=mode)
+
+
 def get_faq_response(message):
     """
     (백업용) 간단한 FAQ 매칭 로직
@@ -168,17 +177,20 @@ def advanced_chat():
 def ai_chat():
     """AI 기반 챗봇 응답"""
     from app.services.llm_service import LLMService
+    from app.services.api_llm_service import APILLMService
     from app.services.elasticsearch_service import ElasticsearchService
-    
+
     data = request.get_json()
     user_message = data.get('message', '').strip()
     mode = data.get('mode', 'concise')
     search_mode = data.get('search_mode', 'faq')
-    
+    provider = data.get('provider', 'local')
+
     if not user_message:
         return jsonify({'error': '메시지를 입력해주세요.'}), 400
-    
+
     llm_service = LLMService()
+    api_llm_service = APILLMService()
     es_service = ElasticsearchService()
     
     try:
@@ -238,17 +250,18 @@ def ai_chat():
                     })
                 prompt = user_message
 
-            response = llm_service.generate_response(prompt, max_length=300, mode=mode)
-            if response and len(response) > max_chars:
+            response = _generate_llm_response(prompt, provider, mode, llm_service, api_llm_service)
+            if provider == 'local' and response and len(response) > max_chars:
                 response = response[:max_chars].rsplit(' ', 1)[0] + "..."
 
             return jsonify({
                 'response': response,
                 'related_docs': related_docs,
                 'mode': mode,
-                'search_mode': search_mode
+                'search_mode': search_mode,
+                'provider': provider
             })
-            
+
         elif search_mode == 'search':
             # RAG 모드 - ChromaDB 벡터 검색 + LLM 응답 생성
             related_docs = []
@@ -281,29 +294,30 @@ def ai_chat():
             else:
                 prompt = user_message
 
-            response = llm_service.generate_response(prompt, max_length=300, mode=mode)
-            if response and len(response) > max_chars:
+            response = _generate_llm_response(prompt, provider, mode, llm_service, api_llm_service)
+            if provider == 'local' and response and len(response) > max_chars:
                 response = response[:max_chars].rsplit(' ', 1)[0] + "..."
 
             return jsonify({
                 'response': response,
                 'related_docs': related_docs,
                 'mode': mode,
-                'search_mode': search_mode
+                'search_mode': search_mode,
+                'provider': provider
             })
-            
+
         elif search_mode == 'ai':
-            # AI 모드 - 순수 LLM 응답 (300자 이내 상세한 답변)
-            response = llm_service.generate_response(user_message, max_length=300, mode=mode)
-            
-            # 문자 수 제한
-            if response and len(response) > max_chars:
+            # AI 모드 - 순수 LLM 응답
+            response = _generate_llm_response(user_message, provider, mode, llm_service, api_llm_service)
+
+            if provider == 'local' and response and len(response) > max_chars:
                 response = response[:max_chars].rsplit(' ', 1)[0] + "..."
-            
+
             return jsonify({
                 'response': response,
                 'mode': mode,
-                'search_mode': search_mode
+                'search_mode': search_mode,
+                'provider': provider
             })
             
     except Exception as e:
